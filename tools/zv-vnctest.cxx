@@ -98,6 +98,8 @@ public:
     return (double)lit / ((double)pb->width() * pb->height());
   }
 
+  rfb::ModifiablePixelBuffer* fb() { return getFramebuffer(); }
+
   const char* securityName()
   {
     return csecurity ? rfb::secTypeName(csecurity->getType()) : "?";
@@ -175,7 +177,7 @@ int main(int argc, char** argv)
       return 1;
     }
 
-    rfb::ModifiablePixelBuffer* pb = cc.getFramebuffer();
+    rfb::ModifiablePixelBuffer* pb = cc.fb();
     double lit = cc.coverage();
     printf("%s: %dx%d, %d updates, %.0f%% drawn, security %s\n", label,
            pb->width(), pb->height(), cc.updates, lit * 100,
