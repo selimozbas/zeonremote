@@ -12,8 +12,7 @@
 <p align="center">
   <a href="https://github.com/selimozbas/zeonvnc/releases/latest"><b>Download</b></a> ·
   <a href="docs/USER_GUIDE.md">User guide</a> ·
-  <a href="docs/BUILDING.md">Building</a> ·
-  <a href="README.tr.md">Türkçe</a>
+  <a href="docs/BUILDING.md">Building</a>
 </p>
 
 ---
