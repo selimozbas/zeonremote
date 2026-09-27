@@ -35,6 +35,7 @@
   <string>ZVApplication</string>
   <key>NSHumanReadableCopyright</key>
   <string>© 2026 Selim Ozbas and contributors. GNU General Public License v2 or later.</string>
+  @ZV_SPARKLE_ENTRIES@
   <key>NSLocalNetworkUsageDescription</key>
   <string>ZeonVNC connects to VNC servers on your local network.</string>
   <key>CFBundleURLTypes</key>

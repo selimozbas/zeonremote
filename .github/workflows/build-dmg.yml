@@ -58,9 +58,21 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || inputs.release
         env:
           GH_TOKEN: ${{ github.token }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           version=$(sed -n 's/^project(ZeonVNC VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
           version="${version%.0}"
           awk -v v="$version" '/^## /{p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
-          gh release create "v$version" build/ZeonVNC-*.dmg --target "$GITHUB_SHA" \
+          dmg=$(ls build/ZeonVNC-*.dmg)
+          assets=("$dmg")
+          # Signed appcast for automatic updates (see "Automatic updates" in docs/BUILDING.md)
+          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
+            signature=$(printf '%s' "$SPARKLE_PRIVATE_KEY" | build/sparkle-*/bin/sign_update --ed-key-file - "$dmg")
+            min=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" build/src/ZeonVNC.app/Contents/Info.plist)
+            tools/make-appcast.py "$dmg" "$signature" "$min" notes.md > build/appcast.xml
+            assets+=(build/appcast.xml)
+          else
+            echo "::warning::SPARKLE_PRIVATE_KEY is not set, publishing without an appcast"
+          fi
+          gh release create "v$version" "${assets[@]}" --target "$GITHUB_SHA" \
             --title "ZeonVNC $version" --notes-file notes.md --latest

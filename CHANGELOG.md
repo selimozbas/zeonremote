@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Automatic updates (Sparkle): ZeonVNC → Check for Updates…, and a daily check
 - New app icon for macOS 26 Tahoe (Icon Composer), no longer shown shrunk inside a
   grey tile
 - File transfer: click a column header (Name, Size, Modified) to sort, click again

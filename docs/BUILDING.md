@@ -38,6 +38,7 @@ The result runs on Macs without Homebrew.
 | `ENABLE_NETTLE` | ON | RSA-AES (RA2), DH, MSLogonII |
 | `ENABLE_H264` | ON | H.264 via VideoToolbox |
 | `BUNDLE_DYLIBS` | ON | Copy libraries into the app bundle |
+| `ENABLE_SPARKLE` | ON | Automatic updates (downloads Sparkle when configuring) |
 | `CMAKE_OSX_DEPLOYMENT_TARGET` | 13.0 | Oldest macOS the app starts on (`LSMinimumSystemVersion`) |
 | `CODESIGN_IDENTITY` | first "Apple Development" identity, else `-` | Signing identity (`-` = ad hoc) |
 | `BUILD_TESTSERVER` | ON | Development tools (see below) |
@@ -80,6 +81,32 @@ Then sign, notarize and staple the DMG:
 tools/notarize.sh zeonvnc
 ```
 
+## Automatic updates
+
+The app checks for new versions with [Sparkle](https://sparkle-project.org)
+(**ZeonVNC → Check for Updates…**, and automatically once a day). The build
+downloads the official Sparkle release (`ENABLE_SPARKLE`, on by default) and embeds
+it in the app. Updates are signed with an EdDSA key; the app only turns updating on
+when `resources/sparkle-public-key.txt` holds the public half of that key.
+
+One-time setup, on a Mac:
+
+1. Download `Sparkle-2.9.6.tar.xz` from the
+   [Sparkle releases](https://github.com/sparkle-project/Sparkle/releases/tag/2.9.6)
+   and unpack it.
+2. Run `./bin/generate_keys`. It stores a new key in your login Keychain and prints
+   the public key. Put that line into `resources/sparkle-public-key.txt` and commit
+   it.
+3. Run `./bin/generate_keys -x sparkle-private-key.txt` to export the private key.
+   On GitHub open **Settings → Secrets and variables → Actions → New repository
+   secret**, name it `SPARKLE_PRIVATE_KEY` and paste the contents of that file.
+   Then delete the file (the key stays in your Keychain).
+
+From then on every published release carries `appcast.xml`, signed with the
+private key; the app reads it from
+`https://github.com/selimozbas/zeonvnc/releases/latest/download/appcast.xml`.
+Never commit the private key: whoever has it can push updates to every user.
+
 ## Development tools
 
 Built with `BUILD_TESTSERVER=ON` into `build/`:
@@ -90,6 +117,12 @@ Built with `BUILD_TESTSERVER=ON` into `build/`:
 | `zv-h264test in.h264 w h out.ppm` | Decodes an H.264 stream with the VideoToolbox decoder |
 | `zv-sftptest host port user localdir remotedir downloaddir` | SFTP round trip |
 | `zv-sftpconflict …` | Same with conflict answers (Keep Both / Skip / Stop) |
+| `zv-vnctest` | Headless VNC client used by the tests: `-port N`, `-password PW`, `-encoding raw\|hextile\|tight\|zrle`, `-security TYPE`, `-expect-auth-failure` |
+
+`tools/run-tests.sh` runs the VNC and SFTP tests against local servers (the SFTP
+part starts a private `sshd` on port 2222 with a throwaway key), and
+`tools/check-release.sh build/ZeonVNC-*.dmg` checks a DMG before it is published.
+GitHub Actions runs both on every push.
 
 The app icon is `resources/AppIcon.icon` (open it with Icon Composer, which comes
 with Xcode 26). The build compiles it into `Assets.car` when Xcode 26 or later is

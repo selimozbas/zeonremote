@@ -68,6 +68,29 @@ set_target_properties(ZeonVNC PROPERTIES
   OUTPUT_NAME ZeonVNC
   MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/Info.plist.in)
 
+# Automatic updates
+set(ZV_SPARKLE_ENTRIES "")
+if(ENABLE_SPARKLE)
+  target_compile_definitions(ZeonVNC PRIVATE ZV_SPARKLE=1)
+  target_compile_options(ZeonVNC PRIVATE -F${SPARKLE_DIR})
+  target_link_options(ZeonVNC PRIVATE -F${SPARKLE_DIR} -Wl,-rpath,@executable_path/../Frameworks)
+  target_link_libraries(ZeonVNC "-framework Sparkle")
+  add_custom_command(TARGET ZeonVNC POST_BUILD
+    COMMAND rm -rf $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks/Sparkle.framework
+    COMMAND ditto ${SPARKLE_DIR}/Sparkle.framework
+            $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks/Sparkle.framework
+    VERBATIM)
+  if(NOT SPARKLE_PUBLIC_KEY STREQUAL "")
+    string(CONCAT ZV_SPARKLE_ENTRIES
+      "<key>SUFeedURL</key>\n"
+      "  <string>https://github.com/selimozbas/zeonvnc/releases/latest/download/appcast.xml</string>\n"
+      "  <key>SUPublicEDKey</key>\n"
+      "  <string>${SPARKLE_PUBLIC_KEY}</string>\n"
+      "  <key>SUEnableAutomaticChecks</key>\n"
+      "  <true/>")
+  endif()
+endif()
+
 # The Info.plist template uses @VAR@ placeholders
 configure_file(${CMAKE_SOURCE_DIR}/resources/Info.plist.in
                ${CMAKE_CURRENT_BINARY_DIR}/Info.plist @ONLY)
