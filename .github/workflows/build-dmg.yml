@@ -25,7 +25,9 @@ jobs:
 
       - name: Build
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=OFF -DCODESIGN_IDENTITY=-
+          # The Homebrew libraries of the macos-15 runner need macOS 15
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=OFF -DCODESIGN_IDENTITY=- \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
           cmake --build build -j
 
       - name: Make DMG
