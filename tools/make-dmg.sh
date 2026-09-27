@@ -24,7 +24,13 @@ ditto "$APP" "$STAGE/ZeonVNC.app"
 cp "$ROOT/LICENSE" "$STAGE/LICENSE.txt"
 cp "$ROOT/THIRD_PARTY_NOTICES.md" "$STAGE/Third Party Notices.md"
 
-create-dmg \
+# Finder window layout needs a logged in GUI session, which CI lacks
+extra=()
+if [ -n "${CI:-}" ]; then
+  extra=(--skip-jenkins)
+fi
+
+create-dmg ${extra[@]+"${extra[@]}"} \
   --volname "ZeonVNC $SHORT" \
   --volicon "$ROOT/resources/ZeonVNC.icns" \
   --window-pos 200 120 \

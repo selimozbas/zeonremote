@@ -1,0 +1,28 @@
+name: Build DMG
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  workflow_dispatch:
+
+jobs:
+  dmg:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
+
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=OFF -DCODESIGN_IDENTITY=-
+          cmake --build build -j
+
+      - name: Make DMG
+        run: tools/make-dmg.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZeonVNC-dmg
+          path: build/ZeonVNC-*.dmg
