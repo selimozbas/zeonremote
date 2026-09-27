@@ -94,8 +94,16 @@ drag ZeonVNC to Applications.
 
 **Requirements:** a Mac with Apple silicon, macOS 13 Ventura or later.
 
-The release is not notarized by Apple yet, so the first start needs one extra step:
-right click ZeonVNC in Applications → **Open** → **Open**, or run
+The release is not notarized by Apple yet, so macOS says *"Apple could not verify
+"ZeonVNC" is free of malware"* on the first start. Click **Done** (not Move to Trash),
+then allow it once:
+
+- **macOS 15 Sequoia and macOS 26 Tahoe:** open **System Settings → Privacy &
+  Security**, scroll down to *"ZeonVNC" was blocked…*, click **Open Anyway** and
+  confirm with your password. (Right click → Open no longer works on these versions.)
+- **macOS 13 and 14:** right click ZeonVNC in Applications → **Open** → **Open**.
+
+Or, on any version, run once in Terminal:
 
 ```bash
 xattr -dr com.apple.quarantine /Applications/ZeonVNC.app

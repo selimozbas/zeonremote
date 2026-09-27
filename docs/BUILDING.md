@@ -53,19 +53,29 @@ tools/make-dmg.sh
 builds `build/ZeonVNC-<version>.dmg` from the current build. The version comes from
 `project(ZeonVNC VERSION …)` in `CMakeLists.txt`.
 
-For distribution outside GitHub, sign with a *Developer ID Application* certificate
-and notarize:
+Without notarization Gatekeeper shows *"Apple could not verify "ZeonVNC" is free of
+malware"* on every other Mac. To ship without that warning you need a paid Apple
+Developer account and a *Developer ID Application* certificate. Build with it — the
+hardened runtime and a secure timestamp, both required for notarization, are then
+turned on automatically:
 
 ```bash
 cmake -S . -B build -DCODESIGN_IDENTITY="Developer ID Application: …"
+cmake --build build -j
+tools/make-dmg.sh
 ```
 
-```bash
-xcrun notarytool submit build/ZeonVNC-0.3.dmg --keychain-profile <profile> --wait
-```
+Store the notary credentials once (an app-specific password from
+account.apple.com):
 
 ```bash
-xcrun stapler staple build/ZeonVNC-0.3.dmg
+xcrun notarytool store-credentials zeonvnc --apple-id <apple id> --team-id <team id>
+```
+
+Then sign, notarize and staple the DMG:
+
+```bash
+tools/notarize.sh zeonvnc
 ```
 
 ## Development tools

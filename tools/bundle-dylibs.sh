@@ -8,7 +8,9 @@
 # Without an identity the bundle is signed ad hoc. Ad hoc signatures
 # change on every build, which makes macOS forget Keychain access and
 # Local Network permission, so a real (e.g. Apple Development) identity
-# is preferred.
+# is preferred. A "Developer ID Application" identity additionally turns
+# on the hardened runtime and a secure timestamp, which notarization
+# requires (see tools/notarize.sh).
 set -euo pipefail
 
 APP="$1"
@@ -63,8 +65,14 @@ for lib in "$FW"/*.dylib; do
   otool -l "$lib" | grep -q "@loader_path" || install_name_tool -add_rpath "@loader_path" "$lib" 2>/dev/null || true
 done
 
-codesign --force --sign "$IDENTITY" "$FW"/*.dylib >/dev/null
-codesign --force --sign "$IDENTITY" "$APP" >/dev/null
+sign_opts=()
+if [ "$IDENTITY" != "-" ] &&
+   security find-identity -v -p codesigning | grep -F "$IDENTITY" | grep -q "Developer ID Application"; then
+  sign_opts=(--options runtime --timestamp)
+fi
+
+codesign --force --sign "$IDENTITY" ${sign_opts[@]+"${sign_opts[@]}"} "$FW"/*.dylib >/dev/null
+codesign --force --sign "$IDENTITY" ${sign_opts[@]+"${sign_opts[@]}"} "$APP" >/dev/null
 
 echo "Bundled:$done_list"
-echo "Signed with: $IDENTITY"
+echo "Signed with: $IDENTITY ${sign_opts[*]:-}"
