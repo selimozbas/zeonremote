@@ -15,10 +15,37 @@ permissions:
   contents: write
 
 jobs:
+  # The Icon Composer icon only compiles on macOS 26 or later
+  icon:
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile the app icon
+        run: |
+          xcode=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$xcode" ]; then sudo xcode-select -s "$xcode"; fi
+          xcodebuild -version
+          tools/compile-icon.sh appicon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appicon
+          path: |
+            appicon/Assets.car
+            appicon/AppIcon.icns
+
   dmg:
+    needs: icon
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: appicon
+          path: appicon
 
       - name: Install dependencies
         run: brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
@@ -26,12 +53,18 @@ jobs:
       - name: Build
         run: |
           # The Homebrew libraries of the macos-15 runner need macOS 15
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=OFF -DCODESIGN_IDENTITY=- \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=ON -DCODESIGN_IDENTITY=- \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DZV_APPICON_DIR="$PWD/appicon"
           cmake --build build -j
+
+      - name: Test
+        run: tools/run-tests.sh build
 
       - name: Make DMG
         run: tools/make-dmg.sh
+
+      - name: Check DMG
+        run: tools/check-release.sh build/ZeonVNC-*.dmg
 
       - uses: actions/upload-artifact@v4
         with:
@@ -45,9 +78,21 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v') || inputs.release
         env:
           GH_TOKEN: ${{ github.token }}
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
           version=$(sed -n 's/^project(ZeonVNC VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
           version="${version%.0}"
           awk -v v="$version" '/^## /{p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
-          gh release create "v$version" build/ZeonVNC-*.dmg --target "$GITHUB_SHA" \
+          dmg=$(ls build/ZeonVNC-*.dmg)
+          assets=("$dmg")
+          # Signed appcast for automatic updates (see "Automatic updates" in docs/BUILDING.md)
+          if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
+            signature=$(printf '%s' "$SPARKLE_PRIVATE_KEY" | build/sparkle-*/bin/sign_update --ed-key-file - "$dmg")
+            min=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" build/src/ZeonVNC.app/Contents/Info.plist)
+            tools/make-appcast.py "$dmg" "$signature" "$min" notes.md > build/appcast.xml
+            assets+=(build/appcast.xml)
+          else
+            echo "::warning::SPARKLE_PRIVATE_KEY is not set, publishing without an appcast"
+          fi
+          gh release create "v$version" "${assets[@]}" --target "$GITHUB_SHA" \
             --title "ZeonVNC $version" --notes-file notes.md --latest

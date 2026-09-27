@@ -21,6 +21,7 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
   NSTextField* _paneTitleLabel;
   NSImageView* _paneTitleIcon;
   NSTextField* _footer;
+  NSSearchField* _search;
   NSButton* _backButton;
   NSButton* _hiddenButton;
 
@@ -96,6 +97,17 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
   _pathControl.target = self;
   _pathControl.action = @selector(pathClicked:);
   _pathControl.translatesAutoresizingMaskIntoConstraints = NO;
+  [_pathControl setContentCompressionResistancePriority:NSLayoutPriorityDefaultLow
+                                         forOrientation:NSLayoutConstraintOrientationHorizontal];
+
+  _search = [[NSSearchField alloc] init];
+  _search.placeholderString = @"Filter";
+  _search.sendsSearchStringImmediately = YES;
+  _search.target = self;
+  _search.action = @selector(filterChanged:);
+  _search.controlSize = NSControlSizeSmall;
+  _search.font = [NSFont systemFontOfSize:[NSFont systemFontSizeForControlSize:NSControlSizeSmall]];
+  _search.translatesAutoresizingMaskIntoConstraints = NO;
 
   _table = [[NSTableView alloc] init];
   _table.usesAlternatingRowBackgroundColors = YES;
@@ -118,9 +130,14 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
   NSTableColumn* c3 = [[NSTableColumn alloc] initWithIdentifier:kColDate];
   c3.title = @"Modified";
   c3.width = 140;
+  // Click a header to sort, click again to reverse; folders stay on top
+  c1.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
+  c2.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"size" ascending:NO];
+  c3.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"modified" ascending:NO];
   [_table addTableColumn:c1];
   [_table addTableColumn:c2];
   [_table addTableColumn:c3];
+  _table.sortDescriptors = @[[self savedSortDescriptor] ?: c1.sortDescriptorPrototype];
 
   NSMenu* menu = [[NSMenu alloc] init];
   [menu addItemWithTitle:@"Open" action:@selector(openSelected:) keyEquivalent:@""];
@@ -151,6 +168,7 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
 
   [v addSubview:header];
   [v addSubview:_pathControl];
+  [v addSubview:_search];
   [v addSubview:scroll];
   [v addSubview:_footer];
   [NSLayoutConstraint activateConstraints:@[
@@ -160,7 +178,10 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
     [_paneTitleIcon.widthAnchor constraintEqualToConstant:18],
     [_pathControl.topAnchor constraintEqualToAnchor:header.bottomAnchor constant:6],
     [_pathControl.leadingAnchor constraintEqualToAnchor:v.leadingAnchor constant:8],
-    [_pathControl.trailingAnchor constraintEqualToAnchor:v.trailingAnchor constant:-8],
+    [_pathControl.trailingAnchor constraintEqualToAnchor:_search.leadingAnchor constant:-8],
+    [_search.centerYAnchor constraintEqualToAnchor:_pathControl.centerYAnchor],
+    [_search.trailingAnchor constraintEqualToAnchor:v.trailingAnchor constant:-8],
+    [_search.widthAnchor constraintEqualToConstant:150],
     [scroll.topAnchor constraintEqualToAnchor:_pathControl.bottomAnchor constant:6],
     [scroll.leadingAnchor constraintEqualToAnchor:v.leadingAnchor],
     [scroll.trailingAnchor constraintEqualToAnchor:v.trailingAnchor],
@@ -226,6 +247,8 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
     }
     if (addToHistory && self->_path && ![self->_path isEqualToString:path])
       [self->_history addObject:self->_path];
+    if (![self->_path isEqualToString:path])
+      self->_search.stringValue = @"";
     self->_path = [path copy];
     self->_all = entries;
     [self applyFilter];
@@ -244,16 +267,84 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
     [self loadPath:[self homePath] addToHistory:NO];
 }
 
+#pragma mark Sorting and filtering
+
+// The sort order is remembered separately for this Mac and the remote side
+- (NSString*)sortDefaultsKey
+{
+  return [@"FilePaneSort." stringByAppendingString:NSStringFromClass([self class])];
+}
+
+- (NSSortDescriptor*)savedSortDescriptor
+{
+  NSDictionary* d = [[NSUserDefaults standardUserDefaults] dictionaryForKey:[self sortDefaultsKey]];
+  NSString* key = d[@"key"];
+  if (![@[@"name", @"size", @"modified"] containsObject:key])
+    return nil;
+  return [NSSortDescriptor sortDescriptorWithKey:key ascending:[d[@"ascending"] boolValue]];
+}
+
+- (IBAction)filterChanged:(id)sender
+{
+  [self applyFilter];
+}
+
+- (IBAction)performFindPanelAction:(id)sender
+{
+  [self.view.window makeFirstResponder:_search];
+}
+
+- (NSArray<ZVRemoteFile*>*)sortedEntries:(NSArray<ZVRemoteFile*>*)entries
+{
+  NSSortDescriptor* sd = _table.sortDescriptors.firstObject;
+  NSString* key = sd.key ?: @"name";
+  BOOL ascending = sd ? sd.ascending : YES;
+  return [entries sortedArrayUsingComparator:^NSComparisonResult(ZVRemoteFile* a, ZVRemoteFile* b) {
+    if (a.isDirectory != b.isDirectory)
+      return a.isDirectory ? NSOrderedAscending : NSOrderedDescending;
+    NSComparisonResult r = NSOrderedSame;
+    if ([key isEqualToString:@"size"]) {
+      if (a.size != b.size)
+        r = a.size < b.size ? NSOrderedAscending : NSOrderedDescending;
+    } else if ([key isEqualToString:@"modified"]) {
+      NSDate* da = a.modified ?: [NSDate distantPast];
+      NSDate* db = b.modified ?: [NSDate distantPast];
+      r = [da compare:db];
+    }
+    if (r == NSOrderedSame)
+      r = [a.name localizedStandardCompare:b.name];
+    return ascending ? r : (NSComparisonResult)-r;
+  }];
+}
+
 - (void)applyFilter
 {
-  _entries = _showHidden ? _all
-                         : [_all filteredArrayUsingPredicate:
-                              [NSPredicate predicateWithFormat:@"NOT (name BEGINSWITH '.')"]];
+  // Keep the selection when the order changes
+  NSArray<ZVRemoteFile*>* selected = [_entries objectsAtIndexes:_table.selectedRowIndexes];
+  NSArray<ZVRemoteFile*>* visible = _showHidden ? _all
+      : [_all filteredArrayUsingPredicate:
+           [NSPredicate predicateWithFormat:@"NOT (name BEGINSWITH '.')"]];
+  NSString* filter = [_search.stringValue stringByTrimmingCharactersInSet:
+                        [NSCharacterSet whitespaceCharacterSet]];
+  if (filter.length)
+    visible = [visible filteredArrayUsingPredicate:
+                 [NSPredicate predicateWithFormat:@"name CONTAINS[cd] %@", filter]];
+  _entries = [self sortedEntries:visible];
   [_table reloadData];
+  NSMutableIndexSet* rows = [NSMutableIndexSet indexSet];
+  for (ZVRemoteFile* f in selected) {
+    NSUInteger i = [_entries indexOfObjectIdenticalTo:f];
+    if (i != NSNotFound)
+      [rows addIndex:i];
+  }
+  [_table selectRowIndexes:rows byExtendingSelection:NO];
   NSUInteger dirs = [[_entries filteredArrayUsingPredicate:
                         [NSPredicate predicateWithFormat:@"isDirectory == YES"]] count];
-  [self setStatus:[NSString stringWithFormat:@"%lu folders, %lu files",
-                   (unsigned long)dirs, (unsigned long)(_entries.count - dirs)]];
+  NSString* status = [NSString stringWithFormat:@"%lu folders, %lu files",
+                      (unsigned long)dirs, (unsigned long)(_entries.count - dirs)];
+  if (filter.length)
+    status = [status stringByAppendingFormat:@" matching \u201c%@\u201d", filter];
+  [self setStatus:status];
 }
 
 - (void)updatePathControl
@@ -489,6 +580,18 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
 - (NSInteger)numberOfRowsInTableView:(NSTableView*)tableView
 {
   return _entries.count;
+}
+
+- (void)tableView:(NSTableView*)tableView sortDescriptorsDidChange:(NSArray<NSSortDescriptor*>*)oldDescriptors
+{
+  NSSortDescriptor* sd = tableView.sortDescriptors.firstObject;
+  if (sd.key)
+    [[NSUserDefaults standardUserDefaults] setObject:@{@"key": sd.key, @"ascending": @(sd.ascending)}
+                                              forKey:[self sortDefaultsKey]];
+  [self applyFilter];
+  NSInteger row = _table.selectedRow;
+  if (row >= 0)
+    [_table scrollRowToVisible:row];
 }
 
 - (NSView*)tableView:(NSTableView*)tableView viewForTableColumn:(NSTableColumn*)col row:(NSInteger)row

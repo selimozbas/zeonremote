@@ -19,6 +19,10 @@
 #import "ZVSessionWindowController.h"
 #import "ZVTerminalWindowController.h"
 
+#ifdef ZV_SPARKLE
+#import <Sparkle/Sparkle.h>
+#endif
+
 static const NSEventModifierFlags kLocalShortcutMask =
   NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagCommand;
 
@@ -68,6 +72,9 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSMutableArray<ZVTerminalWindowController*>* _terminals;
   ZVListener* _listener;
   NSMutableArray<NSURL*>* _pendingOpen;
+#ifdef ZV_SPARKLE
+  SPUStandardUpdaterController* _updater;
+#endif
   BOOL _launched;
 }
 
@@ -85,13 +92,23 @@ static const NSEventModifierFlags kLocalShortcutMask =
 - (void)applicationWillFinishLaunching:(NSNotification*)notification
 {
   [ZVPreferences registerDefaults];
+#ifdef ZV_SPARKLE
+  // Automatic updates, only in builds that carry the update signing key
+  if ([[NSBundle mainBundle].infoDictionary[@"SUPublicEDKey"] length])
+    _updater = [[SPUStandardUpdaterController alloc] initWithStartingUpdater:YES
+                                                             updaterDelegate:nil
+                                                          userDriverDelegate:nil];
+#endif
   [self buildMenus];
 
   // Use the bundle icon explicitly (Dock, alerts) even if the icon cache
-  // still has an older build registered
-  NSImage* icon = [NSImage imageNamed:@"ZeonVNC"];
-  if (icon)
-    NSApp.applicationIconImage = icon;
+  // still has an older build registered. Not with the macOS 26 icon from
+  // the asset catalog, which the system draws itself.
+  if (![NSBundle mainBundle].infoDictionary[@"CFBundleIconName"]) {
+    NSImage* icon = [NSImage imageNamed:@"ZeonVNC"];
+    if (icon)
+      NSApp.applicationIconImage = icon;
+  }
 
   // Handle vnc:// URLs
   [[NSAppleEventManager sharedAppleEventManager]
@@ -458,6 +475,13 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSMenuItem* about = [self item:@"About ZeonVNC" action:@selector(showAbout:) key:@""];
   about.target = self;
   [app addItem:about];
+#ifdef ZV_SPARKLE
+  if (_updater) {
+    NSMenuItem* update = [self item:@"Check for Updates…" action:@selector(checkForUpdates:) key:@""];
+    update.target = _updater;
+    [app addItem:update];
+  }
+#endif
   [app addItem:[NSMenuItem separatorItem]];
   NSMenuItem* prefs = [self item:@"Settings…" action:@selector(showPreferences:) key:@","];
   prefs.target = self;
@@ -511,6 +535,9 @@ static const NSEventModifierFlags kLocalShortcutMask =
   [edit addItem:[self item:@"Copy" action:@selector(copy:) key:@"c"]];
   [edit addItem:[self item:@"Paste" action:@selector(paste:) key:@"v"]];
   [edit addItem:[self item:@"Select All" action:@selector(selectAll:) key:@"a"]];
+  NSMenuItem* find = [self item:@"Find…" action:@selector(performFindPanelAction:) key:@"f"];
+  find.tag = NSFindPanelActionShowFindPanel;
+  [edit addItem:find];
   [edit addItem:[NSMenuItem separatorItem]];
   [edit addItem:[self item:@"Type Clipboard Text" action:@selector(typeClipboard:) key:@"t" mods:kLocalShortcutMask]];
   [edit addItem:[self item:@"Copy Screenshot" action:@selector(copyScreenshot:) key:@"c" mods:kLocalShortcutMask]];

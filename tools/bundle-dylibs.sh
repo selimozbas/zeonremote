@@ -71,8 +71,20 @@ if [ "$IDENTITY" != "-" ] &&
   sign_opts=(--options runtime --timestamp)
 fi
 
-codesign --force --sign "$IDENTITY" ${sign_opts[@]+"${sign_opts[@]}"} "$FW"/*.dylib >/dev/null
-codesign --force --sign "$IDENTITY" ${sign_opts[@]+"${sign_opts[@]}"} "$APP" >/dev/null
+sign() { codesign --force --sign "$IDENTITY" ${sign_opts[@]+"${sign_opts[@]}"} "$@" >/dev/null; }
+
+# Sparkle's helpers are signed inside out, as its documentation describes
+SPARKLE="$FW/Sparkle.framework/Versions/B"
+if [ -d "$SPARKLE" ]; then
+  sign "$SPARKLE/XPCServices/Installer.xpc"
+  sign --preserve-metadata=entitlements "$SPARKLE/XPCServices/Downloader.xpc"
+  sign "$SPARKLE/Autoupdate"
+  sign "$SPARKLE/Updater.app"
+  sign "$FW/Sparkle.framework"
+fi
+
+sign "$FW"/*.dylib
+sign "$APP"
 
 echo "Bundled:$done_list"
 echo "Signed with: $IDENTITY ${sign_opts[*]:-}"

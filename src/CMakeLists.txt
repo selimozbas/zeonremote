@@ -27,12 +27,76 @@ if(EXISTS ${ZV_ICON})
   set_source_files_properties(${ZV_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
   list(APPEND ZV_SOURCES ${ZV_ICON})
 endif()
+set(ZV_ICON_FILE ZeonVNC)
+set(ZV_ICON_NAME_ENTRY "")
+
+# macOS 26 icon (Icon Composer format), compiled into Assets.car and
+# AppIcon.icns by the actool of Xcode 26 or later running on macOS 26 or
+# later. ZV_APPICON_DIR can point to a folder with those two files compiled
+# elsewhere (CI builds them on a macOS 26 runner). Without them the app keeps
+# ZeonVNC.icns, which macOS 26 shows shrunk inside a grey tile.
+set(ZV_APPICON ${CMAKE_SOURCE_DIR}/resources/AppIcon.icon)
+set(ZV_APPICON_DIR "" CACHE PATH "Folder with a precompiled Assets.car and AppIcon.icns")
+file(GLOB ZV_APPICON_FILES ${ZV_APPICON}/*.json ${ZV_APPICON}/Assets/*)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${ZV_APPICON_FILES})
+set(_icon_dir "")
+if(ZV_APPICON_DIR)
+  set(_icon_dir ${ZV_APPICON_DIR})
+else()
+  execute_process(COMMAND xcrun actool --version OUTPUT_VARIABLE _actool_version ERROR_QUIET)
+  string(REGEX MATCH "short-bundle-version</key>[ \t\r\n]*<string>([0-9]+)" _match "${_actool_version}")
+  if(_match AND CMAKE_MATCH_1 GREATER_EQUAL 26)
+    set(_icon_dir ${CMAKE_CURRENT_BINARY_DIR}/appicon)
+    file(REMOVE_RECURSE ${_icon_dir})
+    file(MAKE_DIRECTORY ${_icon_dir})
+    execute_process(
+      COMMAND ${CMAKE_SOURCE_DIR}/tools/compile-icon.sh ${_icon_dir}
+      RESULT_VARIABLE _icon_result OUTPUT_QUIET ERROR_VARIABLE _icon_error)
+    if(NOT _icon_result EQUAL 0)
+      message(WARNING "Compiling resources/AppIcon.icon failed (it needs macOS 26 or later), using ZeonVNC.icns")
+      set(_icon_dir "")
+    endif()
+  endif()
+endif()
+if(_icon_dir AND EXISTS ${_icon_dir}/Assets.car AND EXISTS ${_icon_dir}/AppIcon.icns)
+  set_source_files_properties(${_icon_dir}/Assets.car ${_icon_dir}/AppIcon.icns
+    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  list(APPEND ZV_SOURCES ${_icon_dir}/Assets.car ${_icon_dir}/AppIcon.icns)
+  set(ZV_ICON_FILE AppIcon)
+  set(ZV_ICON_NAME_ENTRY "<key>CFBundleIconName</key>\n  <string>AppIcon</string>")
+  message(STATUS "App icon: resources/AppIcon.icon (${_icon_dir})")
+else()
+  message(STATUS "App icon: ZeonVNC.icns")
+endif()
 
 add_executable(ZeonVNC MACOSX_BUNDLE ${ZV_SOURCES})
 
 set_target_properties(ZeonVNC PROPERTIES
   OUTPUT_NAME ZeonVNC
   MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/Info.plist.in)
+
+# Automatic updates
+set(ZV_SPARKLE_ENTRIES "")
+if(ENABLE_SPARKLE)
+  target_compile_definitions(ZeonVNC PRIVATE ZV_SPARKLE=1)
+  target_compile_options(ZeonVNC PRIVATE -F${SPARKLE_DIR})
+  target_link_options(ZeonVNC PRIVATE -F${SPARKLE_DIR} -Wl,-rpath,@executable_path/../Frameworks)
+  target_link_libraries(ZeonVNC "-framework Sparkle")
+  add_custom_command(TARGET ZeonVNC POST_BUILD
+    COMMAND rm -rf $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks/Sparkle.framework
+    COMMAND ditto ${SPARKLE_DIR}/Sparkle.framework
+            $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks/Sparkle.framework
+    VERBATIM)
+  if(NOT SPARKLE_PUBLIC_KEY STREQUAL "")
+    string(CONCAT ZV_SPARKLE_ENTRIES
+      "<key>SUFeedURL</key>\n"
+      "  <string>https://github.com/selimozbas/zeonvnc/releases/latest/download/appcast.xml</string>\n"
+      "  <key>SUPublicEDKey</key>\n"
+      "  <string>${SPARKLE_PUBLIC_KEY}</string>\n"
+      "  <key>SUEnableAutomaticChecks</key>\n"
+      "  <true/>")
+  endif()
+endif()
 
 # The Info.plist template uses @VAR@ placeholders
 configure_file(${CMAKE_SOURCE_DIR}/resources/Info.plist.in
