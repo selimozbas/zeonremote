@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- File transfer: click a column header (Name, Size, Modified) to sort, click again
+  to reverse; folders stay on top
+
 ## 0.3.2 — 2026-09-27
 
 - Fix the minimum macOS version: the deployment target was ignored, so 0.3 only

@@ -118,9 +118,14 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
   NSTableColumn* c3 = [[NSTableColumn alloc] initWithIdentifier:kColDate];
   c3.title = @"Modified";
   c3.width = 140;
+  // Click a header to sort, click again to reverse; folders stay on top
+  c1.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"name" ascending:YES];
+  c2.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"size" ascending:NO];
+  c3.sortDescriptorPrototype = [NSSortDescriptor sortDescriptorWithKey:@"modified" ascending:NO];
   [_table addTableColumn:c1];
   [_table addTableColumn:c2];
   [_table addTableColumn:c3];
+  _table.sortDescriptors = @[c1.sortDescriptorPrototype];
 
   NSMenu* menu = [[NSMenu alloc] init];
   [menu addItemWithTitle:@"Open" action:@selector(openSelected:) keyEquivalent:@""];
@@ -244,12 +249,45 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
     [self loadPath:[self homePath] addToHistory:NO];
 }
 
+- (NSArray<ZVRemoteFile*>*)sortedEntries:(NSArray<ZVRemoteFile*>*)entries
+{
+  NSSortDescriptor* sd = _table.sortDescriptors.firstObject;
+  NSString* key = sd.key ?: @"name";
+  BOOL ascending = sd ? sd.ascending : YES;
+  return [entries sortedArrayUsingComparator:^NSComparisonResult(ZVRemoteFile* a, ZVRemoteFile* b) {
+    if (a.isDirectory != b.isDirectory)
+      return a.isDirectory ? NSOrderedAscending : NSOrderedDescending;
+    NSComparisonResult r = NSOrderedSame;
+    if ([key isEqualToString:@"size"]) {
+      if (a.size != b.size)
+        r = a.size < b.size ? NSOrderedAscending : NSOrderedDescending;
+    } else if ([key isEqualToString:@"modified"]) {
+      NSDate* da = a.modified ?: [NSDate distantPast];
+      NSDate* db = b.modified ?: [NSDate distantPast];
+      r = [da compare:db];
+    }
+    if (r == NSOrderedSame)
+      r = [a.name localizedStandardCompare:b.name];
+    return ascending ? r : -r;
+  }];
+}
+
 - (void)applyFilter
 {
-  _entries = _showHidden ? _all
-                         : [_all filteredArrayUsingPredicate:
-                              [NSPredicate predicateWithFormat:@"NOT (name BEGINSWITH '.')"]];
+  // Keep the selection when the order changes
+  NSArray<ZVRemoteFile*>* selected = [_entries objectsAtIndexes:_table.selectedRowIndexes];
+  NSArray<ZVRemoteFile*>* visible = _showHidden ? _all
+      : [_all filteredArrayUsingPredicate:
+           [NSPredicate predicateWithFormat:@"NOT (name BEGINSWITH '.')"]];
+  _entries = [self sortedEntries:visible];
   [_table reloadData];
+  NSMutableIndexSet* rows = [NSMutableIndexSet indexSet];
+  for (ZVRemoteFile* f in selected) {
+    NSUInteger i = [_entries indexOfObjectIdenticalTo:f];
+    if (i != NSNotFound)
+      [rows addIndex:i];
+  }
+  [_table selectRowIndexes:rows byExtendingSelection:NO];
   NSUInteger dirs = [[_entries filteredArrayUsingPredicate:
                         [NSPredicate predicateWithFormat:@"isDirectory == YES"]] count];
   [self setStatus:[NSString stringWithFormat:@"%lu folders, %lu files",
@@ -489,6 +527,14 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
 - (NSInteger)numberOfRowsInTableView:(NSTableView*)tableView
 {
   return _entries.count;
+}
+
+- (void)tableView:(NSTableView*)tableView sortDescriptorsDidChange:(NSArray<NSSortDescriptor*>*)oldDescriptors
+{
+  [self applyFilter];
+  NSInteger row = _table.selectedRow;
+  if (row >= 0)
+    [_table scrollRowToVisible:row];
 }
 
 - (NSView*)tableView:(NSTableView*)tableView viewForTableColumn:(NSTableColumn*)col row:(NSInteger)row
