@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.2 — 2026-09-27
 
 - Fix the minimum macOS version: the deployment target was ignored, so 0.3 only
   started on the macOS version it was built on (shown with a crossed out circle
