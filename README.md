@@ -88,7 +88,7 @@ over SFTP in a two pane window — handy for labs and offices full of test devic
 
 ## Install
 
-Download `ZeonVNC-0.3.2.dmg` from the
+Download `ZeonVNC-0.3.3.dmg` from the
 [releases page](https://github.com/selimozbas/zeonvnc/releases/latest), open it and
 drag ZeonVNC to Applications.
 

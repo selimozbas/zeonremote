@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.3 — 2026-09-27
 
 - Automatic updates (Sparkle): ZeonVNC → Check for Updates…, and a daily check
 - New app icon for macOS 26 Tahoe (Icon Composer), no longer shown shrunk inside a
