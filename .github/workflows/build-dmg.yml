@@ -15,26 +15,46 @@ permissions:
   contents: write
 
 jobs:
-  dmg:
-    runs-on: macos-15
+  # The Icon Composer icon only compiles on macOS 26 or later
+  icon:
+    runs-on: macos-26
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
-
-      # Xcode 26 or later compiles the macOS 26 app icon (resources/AppIcon.icon)
-      - name: Select Xcode
+      - name: Compile the app icon
         run: |
           xcode=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
           if [ -n "$xcode" ]; then sudo xcode-select -s "$xcode"; fi
           xcodebuild -version
+          tools/compile-icon.sh appicon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: appicon
+          path: |
+            appicon/Assets.car
+            appicon/AppIcon.icns
+
+  dmg:
+    needs: icon
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: appicon
+          path: appicon
+
+      - name: Install dependencies
+        run: brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
 
       - name: Build
         run: |
           # The Homebrew libraries of the macos-15 runner need macOS 15
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=ON -DCODESIGN_IDENTITY=- \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DZV_APPICON_DIR="$PWD/appicon"
           cmake --build build -j
 
       - name: Test

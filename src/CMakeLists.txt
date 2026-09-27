@@ -30,36 +30,43 @@ endif()
 set(ZV_ICON_FILE ZeonVNC)
 set(ZV_ICON_NAME_ENTRY "")
 
-# macOS 26 icon (Icon Composer format), compiled into Assets.car by the
-# actool of Xcode 26 or later. Older Xcodes keep the plain ZeonVNC.icns,
-# which macOS 26 shows shrunk inside a grey tile.
+# macOS 26 icon (Icon Composer format), compiled into Assets.car and
+# AppIcon.icns by the actool of Xcode 26 or later running on macOS 26 or
+# later. ZV_APPICON_DIR can point to a folder with those two files compiled
+# elsewhere (CI builds them on a macOS 26 runner). Without them the app keeps
+# ZeonVNC.icns, which macOS 26 shows shrunk inside a grey tile.
 set(ZV_APPICON ${CMAKE_SOURCE_DIR}/resources/AppIcon.icon)
-execute_process(COMMAND xcrun actool --version OUTPUT_VARIABLE _actool_version ERROR_QUIET)
-string(REGEX MATCH "short-bundle-version</key>[ \t\r\n]*<string>([0-9]+)" _match "${_actool_version}")
-if(_match AND CMAKE_MATCH_1 GREATER_EQUAL 26)
-  set(ZV_ICON_OUT ${CMAKE_CURRENT_BINARY_DIR}/appicon)
-  file(GLOB ZV_APPICON_FILES CONFIGURE_DEPENDS ${ZV_APPICON}/*.json ${ZV_APPICON}/Assets/*)
-  add_custom_command(
-    OUTPUT ${ZV_ICON_OUT}/Assets.car ${ZV_ICON_OUT}/AppIcon.icns
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${ZV_ICON_OUT}
-    COMMAND xcrun actool ${ZV_APPICON} --compile ${ZV_ICON_OUT}
-            --app-icon AppIcon --include-all-app-icons
-            --output-partial-info-plist ${ZV_ICON_OUT}/partial.plist
-            --platform macosx --target-device mac
-            --minimum-deployment-target ${CMAKE_OSX_DEPLOYMENT_TARGET}
-            --enable-on-demand-resources NO --development-region en
-            --errors --warnings --output-format human-readable-text
-    DEPENDS ${ZV_APPICON_FILES}
-    COMMENT "Compiling the app icon"
-    VERBATIM)
-  set_source_files_properties(${ZV_ICON_OUT}/Assets.car ${ZV_ICON_OUT}/AppIcon.icns
-    PROPERTIES MACOSX_PACKAGE_LOCATION Resources GENERATED TRUE)
-  list(APPEND ZV_SOURCES ${ZV_ICON_OUT}/Assets.car ${ZV_ICON_OUT}/AppIcon.icns)
+set(ZV_APPICON_DIR "" CACHE PATH "Folder with a precompiled Assets.car and AppIcon.icns")
+file(GLOB ZV_APPICON_FILES ${ZV_APPICON}/*.json ${ZV_APPICON}/Assets/*)
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${ZV_APPICON_FILES})
+set(_icon_dir "")
+if(ZV_APPICON_DIR)
+  set(_icon_dir ${ZV_APPICON_DIR})
+else()
+  execute_process(COMMAND xcrun actool --version OUTPUT_VARIABLE _actool_version ERROR_QUIET)
+  string(REGEX MATCH "short-bundle-version</key>[ \t\r\n]*<string>([0-9]+)" _match "${_actool_version}")
+  if(_match AND CMAKE_MATCH_1 GREATER_EQUAL 26)
+    set(_icon_dir ${CMAKE_CURRENT_BINARY_DIR}/appicon)
+    file(REMOVE_RECURSE ${_icon_dir})
+    file(MAKE_DIRECTORY ${_icon_dir})
+    execute_process(
+      COMMAND ${CMAKE_SOURCE_DIR}/tools/compile-icon.sh ${_icon_dir}
+      RESULT_VARIABLE _icon_result OUTPUT_QUIET ERROR_VARIABLE _icon_error)
+    if(NOT _icon_result EQUAL 0)
+      message(WARNING "Compiling resources/AppIcon.icon failed (it needs macOS 26 or later), using ZeonVNC.icns")
+      set(_icon_dir "")
+    endif()
+  endif()
+endif()
+if(_icon_dir AND EXISTS ${_icon_dir}/Assets.car AND EXISTS ${_icon_dir}/AppIcon.icns)
+  set_source_files_properties(${_icon_dir}/Assets.car ${_icon_dir}/AppIcon.icns
+    PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+  list(APPEND ZV_SOURCES ${_icon_dir}/Assets.car ${_icon_dir}/AppIcon.icns)
   set(ZV_ICON_FILE AppIcon)
   set(ZV_ICON_NAME_ENTRY "<key>CFBundleIconName</key>\n  <string>AppIcon</string>")
-  message(STATUS "App icon: Icon Composer (actool ${CMAKE_MATCH_1})")
+  message(STATUS "App icon: resources/AppIcon.icon (${_icon_dir})")
 else()
-  message(STATUS "App icon: ZeonVNC.icns (actool of Xcode 26 or later not found)")
+  message(STATUS "App icon: ZeonVNC.icns")
 endif()
 
 add_executable(ZeonVNC MACOSX_BUNDLE ${ZV_SOURCES})

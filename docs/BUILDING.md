@@ -125,7 +125,9 @@ part starts a private `sshd` on port 2222 with a throwaway key), and
 GitHub Actions runs both on every push.
 
 The app icon is `resources/AppIcon.icon` (open it with Icon Composer, which comes
-with Xcode 26). The build compiles it into `Assets.car` when Xcode 26 or later is
-selected (`sudo xcode-select -s /Applications/Xcode.app`); otherwise the app uses
-`resources/ZeonVNC.icns`, which `tools/make-icon.swift` renders and which macOS 26
-shows shrunk inside a grey tile.
+with Xcode 26). `tools/compile-icon.sh` compiles it into `Assets.car`; this needs
+Xcode 26 or later **on macOS 26 or later**, and the build runs it automatically
+there. Elsewhere pass a folder with a precompiled `Assets.car` and `AppIcon.icns`
+as `-DZV_APPICON_DIR=…` (GitHub Actions compiles them on a macOS 26 runner), or
+the app falls back to `resources/ZeonVNC.icns` (rendered by `tools/make-icon.swift`),
+which macOS 26 shows shrunk inside a grey tile.
