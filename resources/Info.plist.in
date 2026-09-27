@@ -9,7 +9,8 @@
   <key>CFBundleExecutable</key>
   <string>ZeonVNC</string>
   <key>CFBundleIconFile</key>
-  <string>ZeonVNC</string>
+  <string>@ZV_ICON_FILE@</string>
+  @ZV_ICON_NAME_ENTRY@
   <key>CFBundleIdentifier</key>
   <string>com.zeonvnc.viewer</string>
   <key>CFBundleInfoDictionaryVersion</key>

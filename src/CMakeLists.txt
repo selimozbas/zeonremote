@@ -27,6 +27,40 @@ if(EXISTS ${ZV_ICON})
   set_source_files_properties(${ZV_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
   list(APPEND ZV_SOURCES ${ZV_ICON})
 endif()
+set(ZV_ICON_FILE ZeonVNC)
+set(ZV_ICON_NAME_ENTRY "")
+
+# macOS 26 icon (Icon Composer format), compiled into Assets.car by the
+# actool of Xcode 26 or later. Older Xcodes keep the plain ZeonVNC.icns,
+# which macOS 26 shows shrunk inside a grey tile.
+set(ZV_APPICON ${CMAKE_SOURCE_DIR}/resources/AppIcon.icon)
+execute_process(COMMAND xcrun actool --version OUTPUT_VARIABLE _actool_version ERROR_QUIET)
+string(REGEX MATCH "short-bundle-version</key>[ \t\r\n]*<string>([0-9]+)" _match "${_actool_version}")
+if(_match AND CMAKE_MATCH_1 GREATER_EQUAL 26)
+  set(ZV_ICON_OUT ${CMAKE_CURRENT_BINARY_DIR}/appicon)
+  file(GLOB ZV_APPICON_FILES CONFIGURE_DEPENDS ${ZV_APPICON}/*.json ${ZV_APPICON}/Assets/*)
+  add_custom_command(
+    OUTPUT ${ZV_ICON_OUT}/Assets.car ${ZV_ICON_OUT}/AppIcon.icns
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${ZV_ICON_OUT}
+    COMMAND xcrun actool ${ZV_APPICON} --compile ${ZV_ICON_OUT}
+            --app-icon AppIcon --include-all-app-icons
+            --output-partial-info-plist ${ZV_ICON_OUT}/partial.plist
+            --platform macosx --target-device mac
+            --minimum-deployment-target ${CMAKE_OSX_DEPLOYMENT_TARGET}
+            --enable-on-demand-resources NO --development-region en
+            --errors --warnings --output-format human-readable-text
+    DEPENDS ${ZV_APPICON_FILES}
+    COMMENT "Compiling the app icon"
+    VERBATIM)
+  set_source_files_properties(${ZV_ICON_OUT}/Assets.car ${ZV_ICON_OUT}/AppIcon.icns
+    PROPERTIES MACOSX_PACKAGE_LOCATION Resources GENERATED TRUE)
+  list(APPEND ZV_SOURCES ${ZV_ICON_OUT}/Assets.car ${ZV_ICON_OUT}/AppIcon.icns)
+  set(ZV_ICON_FILE AppIcon)
+  set(ZV_ICON_NAME_ENTRY "<key>CFBundleIconName</key>\n  <string>AppIcon</string>")
+  message(STATUS "App icon: Icon Composer (actool ${CMAKE_MATCH_1})")
+else()
+  message(STATUS "App icon: ZeonVNC.icns (actool of Xcode 26 or later not found)")
+endif()
 
 add_executable(ZeonVNC MACOSX_BUNDLE ${ZV_SOURCES})
 

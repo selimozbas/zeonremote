@@ -5,6 +5,7 @@
 # - LSMinimumSystemVersion is set, and no executable or library in the
 #   bundle needs a newer macOS than that (the 0.3 binary needed macOS 27)
 # - everything is built for arm64
+# - the macOS 26 app icon is included
 # - the code signature is valid
 #
 # Usage: tools/check-release.sh path/to/ZeonVNC-x.y.z.dmg
@@ -47,6 +48,11 @@ while IFS= read -r f; do
     error "$name needs macOS $minos, but the app claims macOS $MIN"
   fi
 done < <(find "$APP/Contents" -type f \( -perm -u+x -o -name "*.dylib" \))
+
+# The macOS 26 icon needs the asset catalog built from resources/AppIcon.icon
+if [ "$(plist CFBundleIconName)" != "AppIcon" ] || [ ! -f "$APP/Contents/Resources/Assets.car" ]; then
+  error "no macOS 26 app icon (Assets.car); build with Xcode 26 or later"
+fi
 
 codesign --verify --deep --strict "$APP" || error "invalid code signature"
 

@@ -91,4 +91,8 @@ Built with `BUILD_TESTSERVER=ON` into `build/`:
 | `zv-sftptest host port user localdir remotedir downloaddir` | SFTP round trip |
 | `zv-sftpconflict …` | Same with conflict answers (Keep Both / Skip / Stop) |
 
-`tools/make-icon.swift` renders the app icon.
+The app icon is `resources/AppIcon.icon` (open it with Icon Composer, which comes
+with Xcode 26). The build compiles it into `Assets.car` when Xcode 26 or later is
+selected (`sudo xcode-select -s /Applications/Xcode.app`); otherwise the app uses
+`resources/ZeonVNC.icns`, which `tools/make-icon.swift` renders and which macOS 26
+shows shrunk inside a grey tile.

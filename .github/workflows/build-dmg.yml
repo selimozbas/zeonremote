@@ -23,6 +23,13 @@ jobs:
       - name: Install dependencies
         run: brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
 
+      # Xcode 26 or later compiles the macOS 26 app icon (resources/AppIcon.icon)
+      - name: Select Xcode
+        run: |
+          xcode=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -n 1)
+          if [ -n "$xcode" ]; then sudo xcode-select -s "$xcode"; fi
+          xcodebuild -version
+
       - name: Build
         run: |
           # The Homebrew libraries of the macos-15 runner need macOS 15

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- New app icon for macOS 26 Tahoe (Icon Composer), no longer shown shrunk inside a
+  grey tile
 - File transfer: click a column header (Name, Size, Modified) to sort, click again
   to reverse; folders stay on top and each side remembers its sort order
 - File transfer: a Filter field (⌘F) in each pane shows only matching names
