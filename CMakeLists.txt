@@ -8,7 +8,7 @@
 
 cmake_minimum_required(VERSION 3.20)
 
-project(ZeonVNC VERSION 0.3.0 LANGUAGES C CXX OBJC OBJCXX)
+project(ZeonVNC VERSION 0.3.1 LANGUAGES C CXX OBJC OBJCXX)
 
 if(NOT APPLE)
   message(FATAL_ERROR "ZeonVNC only supports macOS")
