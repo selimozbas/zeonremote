@@ -10,6 +10,8 @@
 - File transfer: a Filter field (⌘F) in each pane shows only matching names
 - File transfer: transfer queue — start more transfers while one is running; the
   Transfers list shows each one with progress, speed and time left
+- File transfer: uploading a folder from a path that goes through a symbolic link
+  (for example `/tmp` or `/var`) failed with "No such file or folder"
 - Every build runs VNC (all encodings, password, TLS) and SFTP tests and checks the
   DMG (version, minimum macOS of every binary, architecture, signature)
 

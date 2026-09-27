@@ -625,22 +625,17 @@ static std::string joinPath(const std::string& dir, const std::string& name)
       continue;
     }
     dirs.push_back(target);
-    NSDirectoryEnumerator* e = [fm enumeratorAtURL:url
-                        includingPropertiesForKeys:@[NSURLIsDirectoryKey, NSURLFileSizeKey]
-                                           options:0 errorHandler:nil];
-    NSString* base = url.path;
-    for (NSURL* child in e) {
-      NSString* rel = [child.path substringFromIndex:base.length + 1];
+    // The enumerator gives paths relative to the folder, so a folder reached
+    // through a symlink (/tmp, /var -> /private/...) still maps correctly
+    NSDirectoryEnumerator<NSString*>* e = [fm enumeratorAtPath:url.path];
+    for (NSString* rel in e) {
       std::string remote = joinPath(target, remoteName(rel));
-      NSNumber* childIsDir = nil;
-      [child getResourceValue:&childIsDir forKey:NSURLIsDirectoryKey error:nil];
-      if (childIsDir.boolValue) {
+      NSDictionary* attrs = e.fileAttributes;
+      if ([attrs[NSFileType] isEqualToString:NSFileTypeDirectory]) {
         dirs.push_back(remote);
       } else {
-        NSNumber* size = nil;
-        [child getResourceValue:&size forKey:NSURLFileSizeKey error:nil];
-        files.push_back({child, remote});
-        total += size.unsignedLongLongValue;
+        files.push_back({[url URLByAppendingPathComponent:rel], remote});
+        total += [attrs fileSize];
       }
     }
   }
