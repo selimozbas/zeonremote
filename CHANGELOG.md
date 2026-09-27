@@ -3,7 +3,10 @@
 ## Unreleased
 
 - File transfer: click a column header (Name, Size, Modified) to sort, click again
-  to reverse; folders stay on top
+  to reverse; folders stay on top and each side remembers its sort order
+- File transfer: a Filter field (⌘F) in each pane shows only matching names
+- Every build runs VNC (all encodings, password, TLS) and SFTP tests and checks the
+  DMG (version, minimum macOS of every binary, architecture, signature)
 
 ## 0.3.2 — 2026-09-27
 

@@ -511,6 +511,9 @@ static const NSEventModifierFlags kLocalShortcutMask =
   [edit addItem:[self item:@"Copy" action:@selector(copy:) key:@"c"]];
   [edit addItem:[self item:@"Paste" action:@selector(paste:) key:@"v"]];
   [edit addItem:[self item:@"Select All" action:@selector(selectAll:) key:@"a"]];
+  NSMenuItem* find = [self item:@"Find…" action:@selector(performFindPanelAction:) key:@"f"];
+  find.tag = NSFindPanelActionShowFindPanel;
+  [edit addItem:find];
   [edit addItem:[NSMenuItem separatorItem]];
   [edit addItem:[self item:@"Type Clipboard Text" action:@selector(typeClipboard:) key:@"t" mods:kLocalShortcutMask]];
   [edit addItem:[self item:@"Copy Screenshot" action:@selector(copyScreenshot:) key:@"c" mods:kLocalShortcutMask]];
