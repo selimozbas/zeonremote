@@ -268,7 +268,7 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
     }
     if (r == NSOrderedSame)
       r = [a.name localizedStandardCompare:b.name];
-    return ascending ? r : -r;
+    return ascending ? r : (NSComparisonResult)-r;
   }];
 }
 
