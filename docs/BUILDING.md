@@ -2,7 +2,8 @@
 
 ## Requirements
 
-- macOS 13 or later, Apple silicon
+- macOS 13 or later, Apple silicon (the app runs on the macOS version the Homebrew
+  libraries were built for, or later; see `CMAKE_OSX_DEPLOYMENT_TARGET` below)
 - Xcode (for the macOS SDK and Swift)
 - [Homebrew](https://brew.sh) packages:
 
@@ -37,6 +38,7 @@ The result runs on Macs without Homebrew.
 | `ENABLE_NETTLE` | ON | RSA-AES (RA2), DH, MSLogonII |
 | `ENABLE_H264` | ON | H.264 via VideoToolbox |
 | `BUNDLE_DYLIBS` | ON | Copy libraries into the app bundle |
+| `CMAKE_OSX_DEPLOYMENT_TARGET` | 13.0 | Oldest macOS the app starts on (`LSMinimumSystemVersion`) |
 | `CODESIGN_IDENTITY` | first "Apple Development" identity, else `-` | Signing identity (`-` = ad hoc) |
 | `BUILD_TESTSERVER` | ON | Development tools (see below) |
 

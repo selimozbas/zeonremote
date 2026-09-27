@@ -8,6 +8,10 @@
 
 cmake_minimum_required(VERSION 3.20)
 
+# Must be set before project(), otherwise the compiler targets the macOS
+# version of the build machine and the app refuses to start on older ones
+set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS version")
+
 project(ZeonVNC VERSION 0.3.1 LANGUAGES C CXX OBJC OBJCXX)
 
 if(NOT APPLE)
@@ -15,7 +19,6 @@ if(NOT APPLE)
 endif()
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake/Modules)
-set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS version")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)

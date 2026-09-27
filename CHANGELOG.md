@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Fix the minimum macOS version: the deployment target was ignored, so 0.3 only
+  started on the macOS version it was built on (shown with a crossed out circle
+  over the icon on older versions). Release builds now require macOS 15 or later.
+
 ## 0.3.1 — 2026-09-27
 
 ### Installation
