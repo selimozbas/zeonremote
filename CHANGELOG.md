@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.1 — 2026-09-27
+
+### Installation
+- Install instructions for macOS 15 Sequoia and macOS 26 Tahoe, where right click →
+  Open no longer bypasses the "Apple could not verify" warning (System Settings →
+  Privacy & Security → Open Anyway)
+- Release builds signed with a Developer ID use the hardened runtime and a secure
+  timestamp; `tools/notarize.sh` signs, notarizes and staples the DMG
+- The DMG is built by GitHub Actions
+
 ## 0.3 — 2026-09-27
 
 First public release.
