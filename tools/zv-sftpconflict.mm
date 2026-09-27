@@ -56,8 +56,9 @@ int main(int argc, const char** argv)
               check(e5, "download keep both");
               answer = ZVConflictStop;
               [c downloadFiles:@[root] toDirectory:down progress:nil completion:^(NSArray* u3, NSError* e6) {
-                printf("download stop -> %s\n", e6.code == NSUserCancelledError ? "cancelled ok" : "UNEXPECTED");
-                exit(0);
+                BOOL cancelled = e6.code == NSUserCancelledError;
+                printf("download stop -> %s\n", cancelled ? "cancelled ok" : "UNEXPECTED");
+                exit(cancelled ? 0 : 1);
               }];
             }];
           }];

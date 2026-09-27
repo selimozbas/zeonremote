@@ -26,12 +26,18 @@ jobs:
       - name: Build
         run: |
           # The Homebrew libraries of the macos-15 runner need macOS 15
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=OFF -DCODESIGN_IDENTITY=- \
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=ON -DCODESIGN_IDENTITY=- \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
           cmake --build build -j
 
+      - name: Test
+        run: tools/run-tests.sh build
+
       - name: Make DMG
         run: tools/make-dmg.sh
+
+      - name: Check DMG
+        run: tools/check-release.sh build/ZeonVNC-*.dmg
 
       - uses: actions/upload-artifact@v4
         with:
