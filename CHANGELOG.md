@@ -5,6 +5,8 @@
 - File transfer: click a column header (Name, Size, Modified) to sort, click again
   to reverse; folders stay on top and each side remembers its sort order
 - File transfer: a Filter field (⌘F) in each pane shows only matching names
+- File transfer: transfer queue — start more transfers while one is running; the
+  Transfers list shows each one with progress, speed and time left
 - Every build runs VNC (all encodings, password, TLS) and SFTP tests and checks the
   DMG (version, minimum macOS of every binary, architecture, signature)
 

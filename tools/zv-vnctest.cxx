@@ -26,8 +26,11 @@
 #include <core/Logger_stdio.h>
 
 #include <network/TcpSocket.h>
+#include <rdr/FdInStream.h>
+#include <rdr/FdOutStream.h>
 
 #include <rfb/CConnection.h>
+#include <rfb/CSecurity.h>
 #include <rfb/Exception.h>
 #include <rfb/PixelBuffer.h>
 #include <rfb/Security.h>
@@ -53,6 +56,8 @@ public:
   {
     return true;
   }
+
+  void bell() override {}
 
   bool verifyServerIdentity(const char*, const uint8_t*, size_t) override
   {

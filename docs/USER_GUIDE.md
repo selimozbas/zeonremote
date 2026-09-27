@@ -130,6 +130,10 @@ the right. It uses SFTP, so the device needs SSH (on a Raspberry Pi:
 - Click a column header (Name, Size, Modified) to sort, click it again to reverse the
   order. Folders stay on top, and each side remembers its sort order.
 - Type in the **Filter** field (⌘F) to show only the names that contain the text.
+- Transfers run one after another. **Transfers** at the bottom right shows the list
+  with progress, speed and time left; transfers started while another one runs wait
+  their turn. Stop the running transfer or remove waiting ones with the button on
+  their row; **Clear Finished** removes the completed ones.
 - Deleting on this Mac moves items to the Trash; deleting on the device is permanent
   and asks for confirmation.
 - File names are sent in the composed Unicode form Linux expects, so names with
