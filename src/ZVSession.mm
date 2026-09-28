@@ -1,4 +1,4 @@
-// ZeonVNC - one VNC session
+// Zeon Remote - one VNC session
 //
 // The RFB protocol is handled by the core's rfb::CConnection running on a
 // dedicated thread per session. The main thread never touches the

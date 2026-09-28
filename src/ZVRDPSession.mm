@@ -1,4 +1,4 @@
-// ZeonVNC - one RDP session (see ZVRDPSession.h)
+// Zeon Remote - one RDP session (see ZVRDPSession.h)
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free

@@ -1,4 +1,4 @@
-// ZeonVNC - headless RDP client check: connects with the RDP core the app
+// Zeon Remote - headless RDP client check: connects with the RDP core the app
 // uses, accepts the certificate, receives a few screen updates and checks
 // that the screen was drawn. Used by tools/run-tests.sh against FreeRDP's
 // sample server.

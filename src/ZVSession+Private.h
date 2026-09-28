@@ -1,4 +1,4 @@
-// ZeonVNC - methods of ZVSession for its subclasses (ZVRDPSession) and the
+// Zeon Remote - methods of ZVSession for its subclasses (ZVRDPSession) and the
 // protocol threads. Objective-C++ only.
 //
 // This is free software; you can redistribute it and/or modify it under

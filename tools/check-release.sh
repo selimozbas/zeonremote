@@ -1,14 +1,14 @@
 #!/bin/bash
 # Checks the app inside a release DMG before it is published:
 #
-# - version in Info.plist matches project(ZeonVNC VERSION ...)
+# - version in Info.plist matches project(ZeonRemote VERSION ...)
 # - LSMinimumSystemVersion is set, and no executable or library in the
 #   bundle needs a newer macOS than that (the 0.3 binary needed macOS 27)
 # - everything is built for arm64
 # - the macOS 26 app icon and RDP support (FreeRDP) are included
 # - the code signature is valid
 #
-# Usage: tools/check-release.sh path/to/ZeonVNC-x.y.z.dmg
+# Usage: tools/check-release.sh path/to/ZeonRemote-x.y.z.dmg
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,7 +16,7 @@ DMG="${1:?usage: tools/check-release.sh <dmg>}"
 MOUNT=$(mktemp -d)
 hdiutil attach -nobrowse -readonly -mountpoint "$MOUNT" "$DMG" >/dev/null
 trap 'hdiutil detach "$MOUNT" >/dev/null 2>&1; rmdir "$MOUNT"' EXIT
-APP="$MOUNT/ZeonVNC.app"
+APP="$MOUNT/Zeon Remote.app"
 ERRORS=0
 error() { echo "error: $*" >&2; ERRORS=$((ERRORS + 1)); }
 
@@ -25,7 +25,7 @@ plist() { /usr/libexec/PlistBuddy -c "Print :$1" "$APP/Contents/Info.plist" 2>/d
 # 1.2.3 -> 001002003 for comparing versions as numbers
 vnum() { IFS=. read -r a b c <<<"$1"; printf "%03d%03d%03d" "${a:-0}" "${b:-0}" "${c:-0}"; }
 
-EXPECTED=$(sed -n 's/^project(ZeonVNC VERSION \([0-9.]*\).*/\1/p' "$ROOT/CMakeLists.txt")
+EXPECTED=$(sed -n 's/^project(ZeonRemote VERSION \([0-9.]*\).*/\1/p' "$ROOT/CMakeLists.txt")
 VERSION=$(plist CFBundleShortVersionString)
 [ "$VERSION" = "$EXPECTED" ] || error "version is '$VERSION', expected $EXPECTED"
 

@@ -1,4 +1,4 @@
-// ZeonVNC - file transfer window (SFTP) for a session
+// Zeon Remote - file transfer window (SFTP) for a session
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free

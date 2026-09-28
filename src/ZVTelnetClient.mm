@@ -1,4 +1,4 @@
-// ZeonVNC - Telnet client
+// Zeon Remote - Telnet client
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -255,7 +255,7 @@ enum { TTYPE_IS = 0, TTYPE_SEND = 1 };
         continue;
       }
       if (error)
-        *error = [NSError errorWithDomain:@"ZeonVNC" code:errno
+        *error = [NSError errorWithDomain:@"ZeonRemote" code:errno
                                  userInfo:@{NSLocalizedDescriptionKey: @"Connection lost"}];
       return;
     }
@@ -277,7 +277,7 @@ enum { TTYPE_IS = 0, TTYPE_SEND = 1 };
       if (errno == EAGAIN || errno == EWOULDBLOCK)
         continue;
       if (error)
-        *error = [NSError errorWithDomain:@"ZeonVNC" code:errno
+        *error = [NSError errorWithDomain:@"ZeonRemote" code:errno
                                  userInfo:@{NSLocalizedDescriptionKey: @"Connection lost"}];
       return;
     }

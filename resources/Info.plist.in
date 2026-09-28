@@ -5,9 +5,9 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>ZeonVNC</string>
+  <string>Zeon Remote</string>
   <key>CFBundleExecutable</key>
-  <string>ZeonVNC</string>
+  <string>ZeonRemote</string>
   <key>CFBundleIconFile</key>
   <string>@ZV_ICON_FILE@</string>
   @ZV_ICON_NAME_ENTRY@
@@ -16,7 +16,7 @@
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>ZeonVNC</string>
+  <string>Zeon Remote</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
@@ -37,7 +37,7 @@
   <string>© 2026 Selim Ozbas and contributors. GNU General Public License v2 or later.</string>
   @ZV_SPARKLE_ENTRIES@
   <key>NSLocalNetworkUsageDescription</key>
-  <string>ZeonVNC connects to VNC servers on your local network.</string>
+  <string>Zeon Remote connects to computers and devices on your local network.</string>
   <key>CFBundleURLTypes</key>
   <array>
     <dict>

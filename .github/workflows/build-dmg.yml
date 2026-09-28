@@ -77,12 +77,12 @@ jobs:
         run: tools/make-dmg.sh
 
       - name: Check DMG
-        run: tools/check-release.sh build/ZeonVNC-*.dmg
+        run: tools/check-release.sh build/ZeonRemote-*.dmg
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ZeonVNC-dmg
-          path: build/ZeonVNC-*.dmg
+          name: ZeonRemote-dmg
+          path: build/ZeonRemote-*.dmg
 
       # A version tag (v0.3.1), or a manual run with "release" checked,
       # publishes the DMG as a GitHub release for the project version, with
@@ -93,19 +93,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          version=$(sed -n 's/^project(ZeonVNC VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          version=$(sed -n 's/^project(ZeonRemote VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
           version="${version%.0}"
           awk -v v="$version" '/^## /{p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
-          dmg=$(ls build/ZeonVNC-*.dmg)
+          dmg=$(ls build/ZeonRemote-*.dmg)
           assets=("$dmg")
           # Signed appcast for automatic updates (see "Automatic updates" in docs/BUILDING.md)
           if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
             signature=$(printf '%s' "$SPARKLE_PRIVATE_KEY" | build/sparkle-*/bin/sign_update --ed-key-file - "$dmg")
-            min=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" build/src/ZeonVNC.app/Contents/Info.plist)
+            min=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" build/src/ZeonRemote.app/Contents/Info.plist)
             tools/make-appcast.py "$dmg" "$signature" "$min" notes.md > build/appcast.xml
             assets+=(build/appcast.xml)
           else
             echo "::warning::SPARKLE_PRIVATE_KEY is not set, publishing without an appcast"
           fi
           gh release create "v$version" "${assets[@]}" --target "$GITHUB_SHA" \
-            --title "ZeonVNC $version" --notes-file notes.md --latest
+            --title "Zeon Remote $version" --notes-file notes.md --latest

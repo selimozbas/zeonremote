@@ -1,4 +1,4 @@
-// ZeonVNC - one RDP session. Same interface as a VNC session, so the
+// Zeon Remote - one RDP session. Same interface as a VNC session, so the
 // session window, remote view, scaling, full screen and special keys work
 // unchanged; the protocol is FreeRDP (src/rdp/ZVRdpClient).
 //

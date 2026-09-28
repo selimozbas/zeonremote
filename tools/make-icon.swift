@@ -1,4 +1,4 @@
-// Renders the ZeonVNC app icon: swift tools/make-icon.swift <out.iconset>
+// Renders the Zeon Remote app icon (legacy .icns): swift tools/make-icon.swift <out.iconset>
 import AppKit
 
 let out = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "ZeonVNC.iconset"

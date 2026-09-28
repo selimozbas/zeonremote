@@ -1,4 +1,4 @@
-// ZeonVNC - one VNC session. Owns the protocol connection (which runs on
+// Zeon Remote - one VNC session. Owns the protocol connection (which runs on
 // its own thread) and exposes a main-thread Objective-C interface.
 //
 // This is free software; you can redistribute it and/or modify it under

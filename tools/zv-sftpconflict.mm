@@ -1,4 +1,4 @@
-// ZeonVNC - checks conflict handling: upload / download the same folder
+// Zeon Remote - checks conflict handling: upload / download the same folder
 // twice, answering Keep Both, then Skip, then Replace.
 #import <Foundation/Foundation.h>
 #import "ZVSFTPClient.h"

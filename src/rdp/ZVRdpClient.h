@@ -1,4 +1,4 @@
-// ZeonVNC - RDP client core on top of FreeRDP. Plain C++ without any
+// Zeon Remote - RDP client core on top of FreeRDP. Plain C++ without any
 // Cocoa code, so it also builds for the headless test client on Linux.
 //
 // The connection runs on its own thread. The delegate is called on that

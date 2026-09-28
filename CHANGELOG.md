@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **ZeonVNC is now Zeon Remote**: VNC, RDP, SSH, Telnet, SFTP and FTP in one app.
+  Saved connections, Keychain passwords and settings carry over. The download is
+  `ZeonRemote-<version>.dmg` and installs `Zeon Remote.app`
 - RDP: connect to Windows Remote Desktop (and xrdp) in a ZeonVNC window, built on
   FreeRDP 3: NLA / TLS, graphics pipeline, desktop follows the window size,
   keyboard, mouse, text clipboard, certificates trusted per device

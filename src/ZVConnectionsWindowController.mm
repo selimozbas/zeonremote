@@ -1,4 +1,4 @@
-// ZeonVNC - connection manager (address book + quick connect)
+// Zeon Remote - connection manager (address book + quick connect)
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -159,7 +159,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
                                               backing:NSBackingStoreBuffered defer:NO];
   self = [super initWithWindow:w];
   if (self) {
-    w.title = @"ZeonVNC";
+    w.title = @"Zeon Remote";
     w.subtitle = @"Connections";
     w.minSize = NSMakeSize(760, 520);
     w.releasedWhenClosed = NO;
@@ -1121,7 +1121,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
 {
   NSSavePanel* p = [NSSavePanel savePanel];
   p.allowedContentTypes = @[UTTypeJSON];
-  p.nameFieldStringValue = @"ZeonVNC Connections.json";
+  p.nameFieldStringValue = @"Zeon Remote Connections.json";
   [p beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse r) {
     if (r != NSModalResponseOK)
       return;

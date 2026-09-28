@@ -1,4 +1,4 @@
-# Building ZeonVNC
+# Building Zeon Remote
 
 ## Requirements
 
@@ -22,7 +22,7 @@ tools/build-freerdp.sh ~/freerdp
 ```
 
 and pass `-DFREERDP_DIR=~/freerdp` to the CMake configure step below. Without it
-ZeonVNC builds without RDP. `--with-sample-server` also builds FreeRDP's sample
+Zeon Remote builds without RDP. `--with-sample-server` also builds FreeRDP's sample
 server, which the RDP test uses.
 
 ## Build
@@ -35,7 +35,7 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j
 ```
 
-The app is `build/src/ZeonVNC.app`. The build
+The app is `build/src/ZeonRemote.app`. The build
 
 1. compiles the RFB core (`third_party/rfbcore`) as static libraries,
 2. builds the terminal view (`terminal/`, a Swift package) with SwiftPM,
@@ -69,10 +69,10 @@ permission of the previous build.
 tools/make-dmg.sh
 ```
 
-builds `build/ZeonVNC-<version>.dmg` from the current build. The version comes from
-`project(ZeonVNC VERSION …)` in `CMakeLists.txt`.
+builds `build/ZeonRemote-<version>.dmg` from the current build. The version comes from
+`project(ZeonRemote VERSION …)` in `CMakeLists.txt`.
 
-Without notarization Gatekeeper shows *"Apple could not verify "ZeonVNC" is free of
+Without notarization Gatekeeper shows *"Apple could not verify "Zeon Remote" is free of
 malware"* on every other Mac. To ship without that warning you need a paid Apple
 Developer account and a *Developer ID Application* certificate. Build with it — the
 hardened runtime and a secure timestamp, both required for notarization, are then
@@ -88,19 +88,19 @@ Store the notary credentials once (an app-specific password from
 account.apple.com):
 
 ```bash
-xcrun notarytool store-credentials zeonvnc --apple-id <apple id> --team-id <team id>
+xcrun notarytool store-credentials zeonremote --apple-id <apple id> --team-id <team id>
 ```
 
 Then sign, notarize and staple the DMG:
 
 ```bash
-tools/notarize.sh zeonvnc
+tools/notarize.sh zeonremote
 ```
 
 ## Automatic updates
 
 The app checks for new versions with [Sparkle](https://sparkle-project.org)
-(**ZeonVNC → Check for Updates…**, and automatically once a day). The build
+(**Zeon Remote → Check for Updates…**, and automatically once a day). The build
 downloads the official Sparkle release (`ENABLE_SPARKLE`, on by default) and embeds
 it in the app. Updates are signed with an EdDSA key; the app only turns updating on
 when `resources/sparkle-public-key.txt` holds the public half of that key.
@@ -120,7 +120,7 @@ One-time setup, on a Mac:
 
 From then on every published release carries `appcast.xml`, signed with the
 private key; the app reads it from
-`https://github.com/selimozbas/zeonvnc/releases/latest/download/appcast.xml`.
+`https://github.com/selimozbas/zeonremote/releases/latest/download/appcast.xml`.
 Never commit the private key: whoever has it can push updates to every user.
 
 ## Development tools
@@ -139,7 +139,7 @@ Built with `BUILD_TESTSERVER=ON` into `build/`:
 `tools/run-tests.sh` runs the VNC, RDP and SFTP tests against local servers (RDP
 uses FreeRDP's sample server when `FREERDP_DIR` is set; the SFTP part starts a
 private `sshd` on port 2222 with a throwaway key), and
-`tools/check-release.sh build/ZeonVNC-*.dmg` checks a DMG before it is published.
+`tools/check-release.sh build/ZeonRemote-*.dmg` checks a DMG before it is published.
 GitHub Actions runs both on every push.
 
 The app icon is `resources/AppIcon.icon` (open it with Icon Composer, which comes

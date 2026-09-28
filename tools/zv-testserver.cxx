@@ -1,4 +1,4 @@
-// ZeonVNC - synthetic VNC test server
+// Zeon Remote - synthetic VNC test server
 //
 // Serves an animated desktop using the RFB core's server code so the viewer
 // can be tested against all encodings and auth methods without a real
@@ -54,7 +54,7 @@ public:
   {
     server = vs;
     server->setPixelBuffer(pb, computeLayout());
-    server->setName("ZeonVNC Test Desktop");
+    server->setName("Zeon Remote Test Desktop");
   }
 
   rfb::ScreenSet computeLayout()

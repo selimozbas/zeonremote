@@ -1,4 +1,4 @@
-// ZeonVNC - window hosting a single remote desktop session
+// Zeon Remote - window hosting a single remote desktop session
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -478,7 +478,7 @@ static const int kMaxReconnectAttempts = 20;
     // shows up as "No route to host" for LAN addresses
     if ([message containsString:@"(65)"]) {
       message = [message stringByAppendingString:
-                 @"\n\nIf this computer is on your local network, allow ZeonVNC in "
+                 @"\n\nIf this computer is on your local network, allow Zeon Remote in "
                  @"System Settings → Privacy & Security → Local Network."];
     }
     if ((_everConnected || _reconnectAttempt > 0) && _bookmark.autoReconnect &&

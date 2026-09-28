@@ -1,4 +1,4 @@
-// ZeonVNC - decodes an Annex B H.264 file with the VideoToolbox decoder
+// Zeon Remote - decodes an Annex B H.264 file with the VideoToolbox decoder
 // context and writes the last frame as a PPM image. Development check.
 //
 // Usage: zv-h264test in.h264 width height out.ppm

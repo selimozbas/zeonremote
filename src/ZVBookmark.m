@@ -1,4 +1,4 @@
-// ZeonVNC - saved connection ("bookmark") model and store
+// Zeon Remote - saved connection ("bookmark") model and store
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -270,6 +270,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
                  URLForDirectory:NSApplicationSupportDirectory
                         inDomain:NSUserDomainMask
                appropriateForURL:nil create:YES error:nil];
+  // The folder keeps the app's earlier name, so saved connections carry over
   dir = [dir URLByAppendingPathComponent:@"ZeonVNC" isDirectory:YES];
   [[NSFileManager defaultManager] createDirectoryAtURL:dir
                            withIntermediateDirectories:YES
@@ -565,7 +566,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
                                          name:[[url lastPathComponent] stringByDeletingPathExtension]];
     if (b == nil) {
       if (error)
-        *error = [NSError errorWithDomain:@"ZeonVNC" code:1
+        *error = [NSError errorWithDomain:@"ZeonRemote" code:1
                                  userInfo:@{NSLocalizedDescriptionKey: @"The file does not contain a host."}];
       return NO;
     }
@@ -577,7 +578,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
   id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:error];
   if (![json isKindOfClass:[NSArray class]]) {
     if (error && *error == nil)
-      *error = [NSError errorWithDomain:@"ZeonVNC" code:2
+      *error = [NSError errorWithDomain:@"ZeonRemote" code:2
                                userInfo:@{NSLocalizedDescriptionKey: @"Unrecognised connection list format."}];
     return NO;
   }

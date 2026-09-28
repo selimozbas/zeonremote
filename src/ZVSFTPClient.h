@@ -1,4 +1,4 @@
-// ZeonVNC - SFTP client (libssh2) used for file transfer to devices that
+// Zeon Remote - SFTP client (libssh2) used for file transfer to devices that
 // offer SSH, such as a Raspberry Pi. All network work happens on a
 // private serial queue; completion blocks are called on the main thread.
 //

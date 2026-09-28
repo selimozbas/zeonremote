@@ -1,6 +1,6 @@
 #!/bin/bash
 # Builds a small FreeRDP (libraries only, no clients, no ffmpeg / X11 /
-# audio backends) for ZeonVNC's RDP support and installs it into a prefix
+# audio backends) for Zeon Remote's RDP support and installs it into a prefix
 # that CMake finds with -DFREERDP_DIR=<prefix>.
 #
 # Usage: tools/build-freerdp.sh <prefix> [--with-sample-server]

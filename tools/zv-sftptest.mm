@@ -1,4 +1,4 @@
-// ZeonVNC - SFTP client check: upload a folder, list, download it back,
+// Zeon Remote - SFTP client check: upload a folder, list, download it back,
 // rename and delete. Development only.
 //
 // Usage: zv-sftptest host port user localdir remotedir downloaddir

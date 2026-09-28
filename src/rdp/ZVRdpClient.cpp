@@ -1,4 +1,4 @@
-// ZeonVNC - RDP client core on top of FreeRDP
+// Zeon Remote - RDP client core on top of FreeRDP
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -247,7 +247,7 @@ void ZVRdpClient::run()
     freerdp_settings_set_bool(s, FreeRDP_ExternalCertificateManagement, TRUE) &&
     freerdp_settings_set_bool(s, FreeRDP_AudioPlayback, FALSE) &&
     freerdp_settings_set_bool(s, FreeRDP_DeviceRedirection, FALSE) &&
-    freerdp_settings_set_string(s, FreeRDP_ClientHostname, "ZeonVNC");
+    freerdp_settings_set_string(s, FreeRDP_ClientHostname, "ZeonRemote");
   if (ok && options_.scalePercent > 100) {
     ok = freerdp_settings_set_uint32(s, FreeRDP_DesktopScaleFactor, (UINT32)options_.scalePercent) &&
          freerdp_settings_set_uint32(s, FreeRDP_DeviceScaleFactor,
@@ -613,7 +613,7 @@ BOOL ZVRdpCallbacks::authenticate(freerdp* instance, char** user, char** passwor
 }
 
 // Every certificate comes here (ExternalCertificateManagement): trust is
-// decided by ZeonVNC per device, like VNC TLS certificates, and nothing is
+// decided by Zeon Remote per device, like VNC TLS certificates, and nothing is
 // stored in FreeRDP's known_hosts
 int ZVRdpCallbacks::verifyX509(freerdp* instance, const BYTE* data, size_t length,
                                const char* hostname, UINT16 port, DWORD flags)

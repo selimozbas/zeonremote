@@ -1,4 +1,4 @@
-// ZeonVNC - application delegate, menus and keyboard routing
+// Zeon Remote - application delegate, menus and keyboard routing
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -130,7 +130,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
                                                name:ZVPreferencesChangedNotification object:nil];
   [self updateListener];
 
-  // Addresses on the command line: ZeonVNC vnc://host:port or host::port
+  // Addresses on the command line: ZeonRemote vnc://host:port or host::port
   NSArray* args = [NSProcessInfo processInfo].arguments;
   for (NSUInteger i = 1; i < args.count; i++) {
     NSString* a = args[i];
@@ -182,8 +182,8 @@ static const NSEventModifierFlags kLocalShortcutMask =
     return NSTerminateNow;
 
   NSAlert* a = [[NSAlert alloc] init];
-  a.messageText = active == 1 ? @"Quit ZeonVNC and close the open session?"
-                              : [NSString stringWithFormat:@"Quit ZeonVNC and close %lu open sessions?",
+  a.messageText = active == 1 ? @"Quit Zeon Remote and close the open session?"
+                              : [NSString stringWithFormat:@"Quit Zeon Remote and close %lu open sessions?",
                                  (unsigned long)active];
   [a addButtonWithTitle:@"Quit"];
   [a addButtonWithTitle:@"Cancel"];
@@ -424,7 +424,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSMutableAttributedString* credits = [[NSMutableAttributedString alloc]
     initWithString:@"Remote desktops (VNC), terminals (SSH, Telnet) and file transfer (SFTP) for macOS.\n\n"
                    @"Free software under the GNU General Public License v2 or later.\n"
-                   @"github.com/selimozbas/zeonvnc"
+                   @"github.com/selimozbas/zeonremote"
         attributes:@{NSFontAttributeName: [NSFont systemFontOfSize:11],
                      NSForegroundColorAttributeName: [NSColor secondaryLabelColor]}];
   NSMutableParagraphStyle* ps = [[NSMutableParagraphStyle alloc] init];
@@ -472,8 +472,8 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSMenu* main = [[NSMenu alloc] init];
 
   // App
-  NSMenu* app = [[NSMenu alloc] initWithTitle:@"ZeonVNC"];
-  NSMenuItem* about = [self item:@"About ZeonVNC" action:@selector(showAbout:) key:@""];
+  NSMenu* app = [[NSMenu alloc] initWithTitle:@"Zeon Remote"];
+  NSMenuItem* about = [self item:@"About Zeon Remote" action:@selector(showAbout:) key:@""];
   about.target = self;
   [app addItem:about];
 #ifdef ZV_SPARKLE
@@ -493,12 +493,12 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSApp.servicesMenu = services.submenu;
   [app addItem:services];
   [app addItem:[NSMenuItem separatorItem]];
-  [app addItem:[self item:@"Hide ZeonVNC" action:@selector(hide:) key:@"h"]];
+  [app addItem:[self item:@"Hide Zeon Remote" action:@selector(hide:) key:@"h"]];
   [app addItem:[self item:@"Hide Others" action:@selector(hideOtherApplications:) key:@"h"
                      mods:NSEventModifierFlagCommand | NSEventModifierFlagOption]];
   [app addItem:[self item:@"Show All" action:@selector(unhideAllApplications:) key:@""]];
   [app addItem:[NSMenuItem separatorItem]];
-  [app addItem:[self item:@"Quit ZeonVNC" action:@selector(terminate:) key:@"q"]];
+  [app addItem:[self item:@"Quit Zeon Remote" action:@selector(terminate:) key:@"q"]];
   [self addSubmenu:app title:@"" to:main];
 
   // File

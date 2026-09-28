@@ -1,4 +1,4 @@
-# ZeonVNC user guide
+# Zeon Remote user guide
 
 - [Connecting](#connecting)
 - [Remote desktop (VNC)](#remote-desktop-vnc)
@@ -45,7 +45,7 @@ Delete.
 remove it.
 
 **Import / Export** (File menu) — connections as JSON; `.vnc` connection files can
-be imported too. `vnc://host:port` links open ZeonVNC directly.
+be imported too. `vnc://host:port` links open Zeon Remote directly.
 
 **Reverse connections** — turn on *Listen for incoming connections* in Settings.
 A VNC server can then connect to your Mac (port 5500 by default), e.g. with the
@@ -77,12 +77,12 @@ window, move the pointer to an edge to scroll, or scroll with ⌥ held.
 
 **Quality** — *Automatic* measures the connection and picks JPEG quality and colour
 depth. *Lossless* is best on a LAN. *Smooth Video* asks the server for H.264, which
-ZeonVNC decodes in hardware; it is ideal for video and animation, e.g. with WayVNC
+Zeon Remote decodes in hardware; it is ideal for video and animation, e.g. with WayVNC
 on a Raspberry Pi. The statistics panel shows the encoding the server really uses.
 Per connection, *Custom* lets you choose the encoding, JPEG quality, compression
 level and colour depth.
 
-**Reconnect** — when the connection drops, ZeonVNC reconnects automatically with an
+**Reconnect** — when the connection drops, Zeon Remote reconnects automatically with an
 increasing delay. *Reconnect Now* or *Close* are always available.
 
 **Clipboard** — text copied on either side is available on the other. Turn this off
@@ -179,13 +179,13 @@ See [SECURITY.md](SECURITY.md) for details.
   login dialog tells you that a different device is using the address.
 - A rejected password is not deleted; you are asked again and only that device's
   entry is updated.
-- *Remove All Saved Passwords…* in Settings deletes everything ZeonVNC saved.
+- *Remove All Saved Passwords…* in Settings deletes everything Zeon Remote saved.
 
 ## Settings
 
 | Setting | |
 |---|---|
-| Send ⌘ shortcuts to the remote computer | Otherwise ⌘ shortcuts go to ZeonVNC's menus first |
+| Send ⌘ shortcuts to the remote computer | Otherwise ⌘ shortcuts go to Zeon Remote's menus first |
 | Sharp scaling | Nearest neighbour instead of smooth scaling |
 | Security | Any method, or encrypted connections only |
 | Save passwords in the Keychain | See [Passwords](#passwords) |
@@ -218,7 +218,7 @@ In terminals: ⌘+ / ⌘− font size, ⌥⌘K clear.
 
 ## Troubleshooting
 
-**"No route to host" on the local network** — allow ZeonVNC in System Settings →
+**"No route to host" on the local network** — allow Zeon Remote in System Settings →
 Privacy & Security → Local Network.
 
 **Can't connect to RealVNC Server** — RealVNC Server only accepts third party viewers
@@ -227,5 +227,5 @@ with *VNC Password* authentication (Options → Security in RealVNC Server).
 **UltraVNC server with an encryption plugin** — encryption plugins (DSM) are UltraVNC
 specific and not supported; turn the plugin off or use an SSH tunnel.
 
-**Logs** — start ZeonVNC from a terminal to see its log:
-`/Applications/ZeonVNC.app/Contents/MacOS/ZeonVNC`
+**Logs** — start Zeon Remote from a terminal to see its log:
+`"/Applications/Zeon Remote.app/Contents/MacOS/ZeonRemote"`

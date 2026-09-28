@@ -1,4 +1,4 @@
-// ZeonVNC - headless VNC client check against zv-testserver: connects,
+// Zeon Remote - headless VNC client check against zv-testserver: connects,
 // authenticates, receives a few framebuffer updates with the requested
 // encoding and checks that the screen was drawn. Used by tools/run-tests.sh.
 //

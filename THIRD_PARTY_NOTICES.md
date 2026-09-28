@@ -1,17 +1,17 @@
 # Third party notices
 
-ZeonVNC is licensed under the GNU General Public License, version 2 or (at your
+Zeon Remote is licensed under the GNU General Public License, version 2 or (at your
 option) any later version ([LICENSE](LICENSE)).
 
 It includes and links the components below. Their license texts are in
 [`licenses/`](licenses) and are also shipped inside the app bundle
-(`ZeonVNC.app/Contents/Resources/Licenses`).
+(`Zeon Remote.app/Contents/Resources/Licenses`).
 
 ## Included in the source tree
 
 | Component | Location | License |
 |---|---|---|
-| RFB protocol core (RFB client/server, decoders, security types, streams, keyboard tables) | `third_party/rfbcore` | GPL-2.0-or-later. Copyright © the respective authors as stated in the header of each file. Files changed for ZeonVNC are marked with `ZeonVNC:` comments. |
+| RFB protocol core (RFB client/server, decoders, security types, streams, keyboard tables) | `third_party/rfbcore` | GPL-2.0-or-later. Copyright © the respective authors as stated in the header of each file. Files changed for Zeon Remote are marked with `ZeonVNC:` comments. |
 | SwiftTerm 1.20.0 (terminal emulator) | `terminal/Vendor/SwiftTerm` | MIT — [licenses/SwiftTerm-MIT.txt](licenses/SwiftTerm-MIT.txt) |
 
 ## Libraries bundled with binary releases
@@ -34,12 +34,12 @@ It includes and links the components below. Their license texts are in
 | zlib | zlib license (part of macOS) |
 
 Because OpenSSL 3 is licensed under Apache-2.0, which is compatible with the GPL
-version 3 but not version 2, binary releases of ZeonVNC as a whole are distributed
+version 3 but not version 2, binary releases of Zeon Remote as a whole are distributed
 under the terms of the **GNU GPL version 3 or later**
 ([licenses/GPL-3.0.txt](licenses/GPL-3.0.txt)). The source code remains available
 under GPL-2.0-or-later.
 
 The complete corresponding source code of every release is available at
-<https://github.com/selimozbas/zeonvnc> (tag `v<version>`). The bundled libraries
+<https://github.com/selimozbas/zeonremote> (tag `v<version>`). The bundled libraries
 are unmodified builds from Homebrew; their sources are available from their
 projects and from <https://formulae.brew.sh>.

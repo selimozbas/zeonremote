@@ -1,4 +1,4 @@
-// ZeonVNC - one side of the file transfer window: a folder browser for
+// Zeon Remote - one side of the file transfer window: a folder browser for
 // either this Mac or the remote device (SFTP)
 //
 // This is free software; you can redistribute it and/or modify it under

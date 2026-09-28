@@ -1,4 +1,4 @@
-// ZeonVNC - small networking helpers
+// Zeon Remote - small networking helpers
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -80,7 +80,7 @@ int ZVConnectTCP(NSString* host, int port, volatile BOOL* cancel, NSError** erro
   int gai = getaddrinfo(host.UTF8String, portStr.c_str(), &hints, &res);
   if (gai != 0) {
     if (error)
-      *error = [NSError errorWithDomain:@"ZeonVNC" code:1 userInfo:@{
+      *error = [NSError errorWithDomain:@"ZeonRemote" code:1 userInfo:@{
         NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Unknown host %@: %s", host, gai_strerror(gai)]}];
     return -1;
   }
@@ -131,9 +131,9 @@ int ZVConnectTCP(NSString* host, int port, volatile BOOL* cancel, NSError** erro
                      strerror(lastErr ? lastErr : ECONNREFUSED)];
     if (lastErr == EHOSTUNREACH)
       msg = [msg stringByAppendingString:
-               @"\n\nIf this device is on your local network, allow ZeonVNC in "
+               @"\n\nIf this device is on your local network, allow Zeon Remote in "
                @"System Settings → Privacy & Security → Local Network."];
-    *error = [NSError errorWithDomain:@"ZeonVNC" code:lastErr userInfo:@{NSLocalizedDescriptionKey: msg}];
+    *error = [NSError errorWithDomain:@"ZeonRemote" code:lastErr userInfo:@{NSLocalizedDescriptionKey: msg}];
   }
   return fd;
 }
