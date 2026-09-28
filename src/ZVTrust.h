@@ -1,4 +1,4 @@
-// ZeonVNC - trust decisions for server keys (TLS certificates, RA2 and
+// Zeon Remote - trust decisions for server keys (TLS certificates, RA2 and
 // SSH host keys), tracked per device rather than per address
 //
 // This is free software; you can redistribute it and/or modify it under

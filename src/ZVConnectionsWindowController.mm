@@ -1,4 +1,4 @@
-// ZeonVNC - connection manager (address book + quick connect)
+// Zeon Remote - connection manager (address book + quick connect)
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -111,6 +111,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   BOOL _reloading;
 
   NSComboBox* _quickField;
+  NSPopUpButton* _quickProtocol;
   NSSearchField* _search;
   NSTableView* _table;
   NSView* _detail;
@@ -144,6 +145,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   NSTextField* _sshPort;
   NSPopUpButton* _type;
   NSTextField* _port;
+  NSPopUpButton* _ftpSecurity;
   NSGridView* _grid;
   NSGridView* _grid2;
   NSGridView* _customGrid;
@@ -158,7 +160,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
                                               backing:NSBackingStoreBuffered defer:NO];
   self = [super initWithWindow:w];
   if (self) {
-    w.title = @"ZeonVNC";
+    w.title = @"Zeon Remote";
     w.subtitle = @"Connections";
     w.minSize = NSMakeSize(760, 520);
     w.releasedWhenClosed = NO;
@@ -299,6 +301,17 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   qcLabel.font = [NSFont systemFontOfSize:20 weight:NSFontWeightBold];
   _quickField = [[NSComboBox alloc] init];
   _quickField.placeholderString = @"host or host::port · ssh user@host · telnet host";
+  // Protocol for addresses typed without one ("ssh …", "rdp://…" win)
+  _quickProtocol = [[NSPopUpButton alloc] initWithFrame:NSZeroRect pullsDown:NO];
+  [_quickProtocol addItemsWithTitles:@[@"VNC", @"SSH", @"Telnet", @"RDP", @"SFTP", @"FTP"]];
+  for (NSInteger i = 0; i < _quickProtocol.numberOfItems; i++)
+    [_quickProtocol itemAtIndex:i].tag = i;   // ZVProtocol values
+  _quickProtocol.controlSize = NSControlSizeLarge;
+  _quickProtocol.toolTip = @"Protocol for addresses typed without one";
+  _quickProtocol.target = self;
+  _quickProtocol.action = @selector(quickProtocolChanged:);
+  [_quickProtocol selectItemWithTag:[[NSUserDefaults standardUserDefaults] integerForKey:@"ZVQuickConnectProtocol"]];
+  [self quickProtocolChanged:nil];
   _quickField.completes = YES;
   _quickField.delegate = self;
   _quickField.target = self;
@@ -308,7 +321,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   NSButton* qcButton = [NSButton buttonWithTitle:@"Connect" target:self action:@selector(quickConnect:)];
   qcButton.bezelStyle = NSBezelStyleRounded;
   qcButton.controlSize = NSControlSizeLarge;
-  NSStackView* qcRow = [NSStackView stackViewWithViews:@[_quickField, qcButton]];
+  NSStackView* qcRow = [NSStackView stackViewWithViews:@[_quickField, _quickProtocol, qcButton]];
   qcRow.spacing = 8;
   NSStackView* qc = [NSStackView stackViewWithViews:@[qcLabel, qcRow]];
   qc.orientation = NSUserInterfaceLayoutOrientationVertical;
@@ -404,8 +417,11 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   _password.delegate = self;
   _group = [self field:@"Optional"];
   _alwaysAsk = [self check:@"Always ask for the password"];
-  _type = [self popup:@[@"VNC (remote desktop)", @"SSH (terminal)", @"Telnet (terminal)"]];
+  _type = [self popup:@[@"VNC (remote desktop)", @"SSH (terminal)", @"Telnet (terminal)",
+                        @"RDP (Windows remote desktop)", @"SFTP (file transfer over SSH)",
+                        @"FTP / FTPS (file transfer)"]];
   _port = [[NSTextField alloc] init];
+  _ftpSecurity = [self popup:@[@"No encryption (FTP)", @"FTPS (TLS, explicit)", @"FTPS (TLS, implicit, port 990)"]];
   _port.delegate = self;
   [_port.widthAnchor constraintEqualToConstant:70].active = YES;
   _sshUser = [self field:@"Same as the VNC user"];
@@ -454,7 +470,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
     @[[self label:@"Type"], _type],
     @[[self label:@"Name"], _name],
     @[[self label:@"Address"], _host],
-    @[[self label:@"Port"], _port],
+    @[[self label:@"Port"], [NSStackView stackViewWithViews:@[_port, _ftpSecurity]]],
     @[[self label:@"User name"], _user],
     @[[self label:@"Password"], _password],
     @[[NSGridCell emptyContentView], _alwaysAsk],
@@ -678,6 +694,9 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   switch (p) {
   case ZVProtocolSSH:    return @"terminal";
   case ZVProtocolTelnet: return @"network";
+  case ZVProtocolRDP:    return @"pc";
+  case ZVProtocolSFTP:   return @"folder.badge.person.crop";
+  case ZVProtocolFTP:    return @"folder";
   default:               return @"display";
   }
 }
@@ -734,7 +753,11 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
     if (b.group.length)
       sub = [NSString stringWithFormat:@"%@ · %@", b.group, b.host];
     if (b.protocolType != ZVProtocolVNC)
-      sub = [NSString stringWithFormat:@"%@ · %@", b.protocolType == ZVProtocolSSH ? @"SSH" : @"Telnet", sub];
+      sub = [NSString stringWithFormat:@"%@ · %@", b.protocolType == ZVProtocolSSH ? @"SSH"
+                                                 : b.protocolType == ZVProtocolRDP ? @"RDP"
+                                                 : b.protocolType == ZVProtocolSFTP ? @"SFTP"
+                                                 : b.protocolType == ZVProtocolFTP ? (b.ftpSecurity ? @"FTPS" : @"FTP")
+                                                 : @"Telnet", sub];
     cell.subtitleField.stringValue = sub;
     cell.imageView.image = [NSImage imageWithSystemSymbolName:[self symbolForProtocol:b.protocolType]
                                      accessibilityDescription:nil];
@@ -804,6 +827,13 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
     _port.stringValue = [NSString stringWithFormat:@"%ld", (long)(_editing.sshPort ?: 22)];
   else if (_editing.protocolType == ZVProtocolTelnet)
     _port.stringValue = [NSString stringWithFormat:@"%ld", (long)(_editing.telnetPort ?: 23)];
+  else if (_editing.protocolType == ZVProtocolRDP)
+    _port.stringValue = [NSString stringWithFormat:@"%ld", (long)(_editing.rdpPort ?: 3389)];
+  else if (_editing.protocolType == ZVProtocolSFTP)
+    _port.stringValue = [NSString stringWithFormat:@"%ld", (long)(_editing.sshPort ?: 22)];
+  else if (_editing.protocolType == ZVProtocolFTP)
+    _port.stringValue = [NSString stringWithFormat:@"%ld", (long)(_editing.ftpPort ?: 21)];
+  [_ftpSecurity selectItemWithTag:_editing.ftpSecurity];
   _name.stringValue = _editing.name;
   _host.stringValue = _editing.host;
   _user.stringValue = _editing.username;
@@ -836,6 +866,9 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
 {
   ZVProtocol proto = (ZVProtocol)_type.selectedTag;
   BOOL vnc = proto == ZVProtocolVNC;
+  BOOL rdp = proto == ZVProtocolRDP;
+  BOOL files = proto == ZVProtocolSFTP || proto == ZVProtocolFTP;
+  _ftpSecurity.hidden = proto != ZVProtocolFTP;
   // Rows: 4 port, 5 user, 6 password, 7 always ask, 9-10 display & quality
   [_grid rowAtIndex:4].hidden = vnc;
   [_grid rowAtIndex:5].hidden = proto == ZVProtocolTelnet;
@@ -843,9 +876,17 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   [_grid rowAtIndex:7].hidden = proto == ZVProtocolTelnet;
   [_grid rowAtIndex:9].hidden = !vnc;
   [_grid rowAtIndex:10].hidden = !vnc;
-  _grid2.hidden = !vnc;
+  // Remote desktop options (VNC and RDP); "shared session" is VNC only
+  _grid2.hidden = !vnc && !rdp;
+  [_grid2 rowAtIndex:9].hidden = rdp;
   _host.placeholderString = vnc ? @"192.168.1.10, server:1 or server::5900" : @"192.168.1.10 or host name";
-  _port.placeholderString = proto == ZVProtocolSSH ? @"22" : @"23";
+  _user.placeholderString = rdp ? @"user, DOMAIN\\user or user@domain" : @"Only needed for some servers";
+  _port.placeholderString = (proto == ZVProtocolSSH || proto == ZVProtocolSFTP) ? @"22"
+                          : rdp ? @"3389"
+                          : proto == ZVProtocolFTP ? (_ftpSecurity.selectedTag == 2 ? @"990" : @"21")
+                          : @"23";
+  if (files)
+    _user.placeholderString = proto == ZVProtocolFTP ? @"User name (anonymous for public servers)" : @"User name";
   _customGrid.hidden = !vnc || _quality.selectedTag != ZVQualityCustom;
   NSInteger q = _jpeg.integerValue;
   _jpegLabel.stringValue = q < 0 ? @"Lossless" : [NSString stringWithFormat:@"%ld", (long)q];
@@ -878,7 +919,22 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
       b.sshPort = (port > 0 && port < 65536) ? port : 22;
     else if (b.protocolType == ZVProtocolTelnet)
       b.telnetPort = (port > 0 && port < 65536) ? port : 23;
+    else if (b.protocolType == ZVProtocolRDP)
+      b.rdpPort = (port > 0 && port < 65536) ? port : 3389;
+    else if (b.protocolType == ZVProtocolSFTP)
+      b.sshPort = (port > 0 && port < 65536) ? port : 22;
+    else if (b.protocolType == ZVProtocolFTP) {
+      NSInteger oldSecurity = b.ftpSecurity;
+      b.ftpSecurity = _ftpSecurity.selectedTag;
+      NSInteger def = b.ftpSecurity == 2 ? 990 : 21;
+      // Switching to or from implicit FTPS moves the default port along
+      if (oldSecurity != b.ftpSecurity && (port == 21 || port == 990 || port == 0))
+        port = def;
+      b.ftpPort = (port > 0 && port < 65536) ? port : def;
+      _port.stringValue = [NSString stringWithFormat:@"%ld", (long)b.ftpPort];
+    }
   }
+  BOOL becameRDP = b.protocolType == ZVProtocolRDP && oldType != ZVProtocolRDP;
   b.name = _name.stringValue;
   b.host = [_host.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
   b.username = _user.stringValue;
@@ -900,8 +956,17 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   b.showRemoteCursor = _dotCursor.state == NSControlStateValueOn;
   b.alwaysAskPassword = _alwaysAsk.state == NSControlStateValueOn;
   b.sshUsername = [_sshUser.stringValue stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
-  NSInteger sshPort = _sshPort.integerValue;
-  b.sshPort = (sshPort > 0 && sshPort < 65536) ? sshPort : 22;
+  // The SSH port for file transfer from a desktop session; SFTP and SSH
+  // connections set theirs in the Port field above
+  if (b.protocolType == ZVProtocolVNC || b.protocolType == ZVProtocolRDP) {
+    NSInteger sshPort = _sshPort.integerValue;
+    b.sshPort = (sshPort > 0 && sshPort < 65536) ? sshPort : 22;
+  }
+  if (becameRDP) {
+    // Windows adapts its desktop to the window, at the Mac's pixel density
+    b.scaleMode = ZVScaleNativePixels;
+    b.remoteResize = YES;
+  }
 
   if ([self savingEnabled]) {
     NSString* pw = _password.stringValue;
@@ -929,6 +994,23 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   [self.window makeFirstResponder:_quickField];
 }
 
+- (IBAction)quickProtocolChanged:(id)sender
+{
+  static NSString* const placeholders[] = {
+    @"host or host::port · ssh user@host · telnet host",
+    @"user@host or user@host -p 2222",
+    @"host or host port",
+    @"host, host:port or user@host",
+    @"user@host or user@host:2222",
+    @"user@host or user@host:2121",
+  };
+  NSInteger p = _quickProtocol.selectedTag;
+  if (p >= 0 && p < 6)
+    _quickField.placeholderString = placeholders[p];
+  if (sender)
+    [[NSUserDefaults standardUserDefaults] setInteger:p forKey:@"ZVQuickConnectProtocol"];
+}
+
 - (IBAction)quickConnect:(id)sender
 {
   NSString* host = [_quickField.stringValue stringByTrimmingCharactersInSet:
@@ -936,6 +1018,22 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
   if (host.length == 0) {
     NSBeep();
     return;
+  }
+  // Addresses without a protocol use the one picked next to the field
+  NSString* lower = host.lowercaseString;
+  BOOL explicitProtocol = NO;
+  for (NSString* prefix in @[@"vnc://", @"ssh://", @"telnet://", @"rdp://", @"sftp://", @"ftp://", @"ftps://",
+                              @"ssh ", @"telnet ", @"rdp ", @"sftp ", @"ftp ", @"ftps "])
+    explicitProtocol = explicitProtocol || [lower hasPrefix:prefix];
+  if (!explicitProtocol) {
+    switch ((ZVProtocol)_quickProtocol.selectedTag) {
+    case ZVProtocolSSH:    host = [@"ssh " stringByAppendingString:host]; break;
+    case ZVProtocolTelnet: host = [@"telnet " stringByAppendingString:host]; break;
+    case ZVProtocolRDP:    host = [@"rdp " stringByAppendingString:host]; break;
+    case ZVProtocolSFTP:   host = [@"sftp " stringByAppendingString:host]; break;
+    case ZVProtocolFTP:    host = [@"ftp " stringByAppendingString:host]; break;
+    default: break;
+    }
   }
   // Use saved settings when the address matches a bookmark
   ZVBookmark* quick = [ZVBookmark bookmarkFromQuickConnect:host];
@@ -1064,7 +1162,7 @@ static NSUserInterfaceItemIdentifier const kHeaderID = @"ZVHeaderCell";
 {
   NSSavePanel* p = [NSSavePanel savePanel];
   p.allowedContentTypes = @[UTTypeJSON];
-  p.nameFieldStringValue = @"ZeonVNC Connections.json";
+  p.nameFieldStringValue = @"Zeon Remote Connections.json";
   [p beginSheetModalForWindow:self.window completionHandler:^(NSModalResponse r) {
     if (r != NSModalResponseOK)
       return;

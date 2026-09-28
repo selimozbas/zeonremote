@@ -1,4 +1,4 @@
-// ZeonVNC - two pane file transfer window (this Mac <-> remote over SFTP)
+// Zeon Remote - two pane file transfer window (this Mac <-> remote over SFTP)
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -157,14 +157,15 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
 
 #pragma mark - Window
 
-@interface ZVFileTransferWindowController () <ZVSFTPClientDelegate, ZVFilePaneDelegate,
+@interface ZVFileTransferWindowController () <ZVSFTPClientDelegate, ZVFTPClientDelegate, ZVFilePaneDelegate,
                                               NSWindowDelegate, NSSplitViewDelegate,
                                               NSTableViewDataSource, NSTableViewDelegate>
 @end
 
 @implementation ZVFileTransferWindowController {
   __weak id<ZVFileTransferContext> _context;
-  ZVSFTPClient* _client;
+  id<ZVFileClient> _client;
+  BOOL _ftp;
   NSString* _title;
 
   ZVLocalFilePane* _local;
@@ -198,6 +199,33 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
 - (instancetype)initWithContext:(id<ZVFileTransferContext>)context host:(NSString*)host port:(int)port
                        username:(NSString*)username title:(NSString*)title
 {
+  ZVSFTPClient* sftp = [[ZVSFTPClient alloc] initWithHost:host port:port];
+  sftp.username = username.length ? username : context.transferUsername;
+  sftp.offeredPassword = context.transferPassword;
+  self = [self initWithContext:context client:sftp title:title];
+  if (self)
+    sftp.delegate = self;
+  return self;
+}
+
+- (instancetype)initWithContext:(id<ZVFileTransferContext>)context ftpHost:(NSString*)host port:(int)port
+                       security:(ZVFTPSecurity)security username:(NSString*)username title:(NSString*)title
+{
+  ZVFTPClient* ftp = [[ZVFTPClient alloc] initWithHost:host port:port security:security];
+  ftp.username = username.length ? username : context.transferUsername;
+  ftp.offeredPassword = context.transferPassword;
+  self = [self initWithContext:context client:ftp title:title];
+  if (self) {
+    _ftp = YES;
+    ftp.delegate = self;
+  }
+  return self;
+}
+
+- (instancetype)initWithContext:(id<ZVFileTransferContext>)context client:(id<ZVFileClient>)client
+                          title:(NSString*)title
+{
+  NSString* host = client.host;
   NSWindow* w = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 1000, 580)
                                             styleMask:NSWindowStyleMaskTitled | NSWindowStyleMaskClosable |
                                                       NSWindowStyleMaskMiniaturizable | NSWindowStyleMaskResizable
@@ -207,10 +235,7 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
     _context = context;
     _title = [title copy];
 
-    _client = [[ZVSFTPClient alloc] initWithHost:host port:port];
-    _client.delegate = self;
-    _client.username = username.length ? username : context.transferUsername;
-    _client.offeredPassword = context.transferPassword;
+    _client = client;
     __weak ZVFileTransferWindowController* weakSelf = self;
     _client.conflictHandler = ^ZVConflictAction(ZVTransferConflict* c) {
       return [weakSelf resolveConflict:c];
@@ -235,7 +260,7 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
   return self;
 }
 
-- (ZVSFTPClient*)client { return _client; }
+- (id<ZVFileClient>)client { return _client; }
 
 - (void)close
 {
@@ -245,12 +270,18 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
 
 #pragma mark Keychain
 
-// SSH passwords are saved per device (MAC address or host key)
+// SSH and FTP passwords are saved per device (MAC address or server key)
 - (NSString*)keychainAccount
 {
+  NSString* kind = _ftp ? @"ftp" : @"ssh";
   NSString* ident = [ZVTrust identityForMAC:_client.deviceMAC key:_client.hostKeyFingerprint];
-  return ident ? [@"ssh:" stringByAppendingString:ident]
-               : [@"ssh-host:" stringByAppendingString:_client.host];
+  return ident ? [NSString stringWithFormat:@"%@:%@", kind, ident]
+               : [NSString stringWithFormat:@"%@-host:%@", kind, _client.host];
+}
+
+- (NSString*)ftpClientSavedPassword:(ZVFTPClient*)client
+{
+  return [self sftpClientSavedPassword:nil];
 }
 
 - (NSString*)sftpClientSavedPassword:(ZVSFTPClient*)client
@@ -828,16 +859,41 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
   return [ZVTrust verifyKey:fingerprint mac:client.deviceMAC scope:scope host:client.host];
 }
 
+#pragma mark ZVFTPClientDelegate
+
+- (BOOL)ftpClient:(ZVFTPClient*)client trustCertificate:(NSString*)identity subject:(NSString*)subject
+{
+  id<ZVFileTransferContext> c = _context;
+  NSString* scope = c ? c.transferScope : [@"ftp-host:" stringByAppendingString:client.host];
+  return [ZVTrust verifyKey:identity mac:client.deviceMAC scope:scope host:client.host];
+}
+
+- (BOOL)ftpClient:(ZVFTPClient*)client wantsPasswordForUser:(NSString**)user
+         password:(NSString**)password remember:(BOOL*)remember failed:(BOOL)failed
+{
+  NSString* what = client.security == ZVFTPPlain
+    ? @"Enter the FTP login. The connection is not encrypted: the password is sent as plain text."
+    : @"Enter the FTP login (FTPS, encrypted).";
+  return [self askLoginTitle:[NSString stringWithFormat:@"FTP login to %@", client.host]
+                        info:what user:user password:password remember:remember failed:failed];
+}
+
 - (BOOL)sftpClient:(ZVSFTPClient*)client wantsPasswordForUser:(NSString**)user
           password:(NSString**)password remember:(BOOL*)remember failed:(BOOL)failed
+{
+  return [self askLoginTitle:[NSString stringWithFormat:@"SSH login to %@", client.host]
+                        info:@"File transfer uses SSH (SFTP). Enter the login of the device."
+                        user:user password:password remember:remember failed:failed];
+}
+
+- (BOOL)askLoginTitle:(NSString*)title info:(NSString*)info user:(NSString**)user
+             password:(NSString**)password remember:(BOOL*)remember failed:(BOOL)failed
 {
   BOOL saving = [[NSUserDefaults standardUserDefaults] boolForKey:ZVPrefRememberPasswords];
 
   NSAlert* alert = [[NSAlert alloc] init];
-  alert.messageText = [NSString stringWithFormat:@"SSH login to %@", client.host];
-  alert.informativeText = failed
-    ? @"The user name or password was not accepted."
-    : @"File transfer uses SSH (SFTP). Enter the login of the device.";
+  alert.messageText = title;
+  alert.informativeText = failed ? @"The user name or password was not accepted." : info;
   if (failed)
     alert.alertStyle = NSAlertStyleWarning;
   [alert addButtonWithTitle:@"Log In"];

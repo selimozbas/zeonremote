@@ -1,4 +1,4 @@
-// ZeonVNC - Framebuffer backed by an IOSurface so it can be shown by
+// Zeon Remote - Framebuffer backed by an IOSurface so it can be shown by
 // Metal without any copies.
 //
 // This is free software; you can redistribute it and/or modify it under

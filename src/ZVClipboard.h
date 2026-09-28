@@ -1,4 +1,4 @@
-// ZeonVNC - watches the local pasteboard and applies remote clipboard
+// Zeon Remote - watches the local pasteboard and applies remote clipboard
 // contents without echoing them back.
 //
 // This is free software; you can redistribute it and/or modify it under

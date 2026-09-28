@@ -1,4 +1,4 @@
-// ZeonVNC - one side of the file transfer window
+// Zeon Remote - one side of the file transfer window
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -799,7 +799,7 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
 
 @implementation ZVRemoteFilePane
 
-- (instancetype)initWithClient:(ZVSFTPClient*)client
+- (instancetype)initWithClient:(id<ZVFileClient>)client
 {
   self = [super init];
   if (self) {

@@ -1,4 +1,4 @@
-// ZeonVNC - SFTP client (libssh2)
+// Zeon Remote - SFTP client (libssh2)
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -27,7 +27,7 @@
 
 #include <mutex>
 
-static NSString* const kErrorDomain = @"ZeonVNC.SFTP";
+static NSString* const kErrorDomain = @"ZeonRemote.SFTP";
 
 @implementation ZVRemoteFile
 @end

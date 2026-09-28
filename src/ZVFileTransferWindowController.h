@@ -1,4 +1,4 @@
-// ZeonVNC - file transfer window (SFTP) for a session
+// Zeon Remote - file transfer window (SFTP) for a session
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -7,6 +7,7 @@
 
 #import <Cocoa/Cocoa.h>
 
+#import "ZVFTPClient.h"
 #import "ZVSFTPClient.h"
 
 NS_ASSUME_NONNULL_BEGIN
@@ -29,7 +30,18 @@ NS_ASSUME_NONNULL_BEGIN
                        username:(nullable NSString*)username
                           title:(NSString*)title;
 
-@property (nonatomic, readonly) ZVSFTPClient* client;
+// FTP / FTPS window on its own (a saved or quick FTP connection)
+- (instancetype)initWithContext:(id<ZVFileTransferContext>)context
+                        ftpHost:(NSString*)host
+                           port:(int)port
+                       security:(ZVFTPSecurity)security
+                       username:(nullable NSString*)username
+                          title:(NSString*)title;
+
+// Keeps the context alive (for windows that don't belong to a session)
+@property (nonatomic, strong, nullable) id<ZVFileTransferContext> ownedContext;
+
+@property (nonatomic, readonly) id<ZVFileClient> client;
 
 // Uploads to the remote desktop folder (or home), used when files are
 // dropped on the remote screen. Progress is reported to the caller.

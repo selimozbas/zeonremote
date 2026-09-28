@@ -1,4 +1,4 @@
-# ZeonVNC user guide
+# Zeon Remote user guide
 
 - [Connecting](#connecting)
 - [Remote desktop (VNC)](#remote-desktop-vnc)
@@ -27,11 +27,20 @@ Type an address into Quick Connect and press Return:
 | `ssh://admin@server:2222` | same as above |
 | `telnet 10.0.0.1` | Telnet, port 23 |
 | `telnet://10.0.0.1:2323` | Telnet on port 2323 |
+| `rdp 192.168.1.30` | RDP (Windows Remote Desktop), port 3389 |
+| `rdp admin@server:3390` | RDP as user `admin` on port 3390 |
+| `rdp://admin@server` | RDP as user `admin` |
+| `sftp pi@192.168.1.20` | File transfer over SSH (SFTP) |
+| `ftp nas.local` | File transfer over FTP (not encrypted) |
+| `ftps://admin@nas.local` | FTPS (FTP with TLS); port 990 means implicit FTPS |
+
+The menu next to the field picks the protocol for addresses typed without one: with
+**RDP** selected, `192.168.1.30` opens an RDP session.
 
 If the address matches a saved connection, its settings are used.
 
-**Address Book** — press **+** to add a connection. Choose its **Type** (VNC, SSH or
-Telnet); the form only shows what applies to that type. Changes are saved as you
+**Address Book** — press **+** to add a connection. Choose its **Type** (VNC, RDP, SSH
+or Telnet); the form only shows what applies to that type. Changes are saved as you
 type. Double click a connection to open it; right click for Connect, Duplicate and
 Delete.
 
@@ -39,7 +48,7 @@ Delete.
 remove it.
 
 **Import / Export** (File menu) — connections as JSON; `.vnc` connection files can
-be imported too. `vnc://host:port` links open ZeonVNC directly.
+be imported too. `vnc://host:port` links open Zeon Remote directly.
 
 **Reverse connections** — turn on *Listen for incoming connections* in Settings.
 A VNC server can then connect to your Mac (port 5500 by default), e.g. with the
@@ -71,12 +80,12 @@ window, move the pointer to an edge to scroll, or scroll with ⌥ held.
 
 **Quality** — *Automatic* measures the connection and picks JPEG quality and colour
 depth. *Lossless* is best on a LAN. *Smooth Video* asks the server for H.264, which
-ZeonVNC decodes in hardware; it is ideal for video and animation, e.g. with WayVNC
+Zeon Remote decodes in hardware; it is ideal for video and animation, e.g. with WayVNC
 on a Raspberry Pi. The statistics panel shows the encoding the server really uses.
 Per connection, *Custom* lets you choose the encoding, JPEG quality, compression
 level and colour depth.
 
-**Reconnect** — when the connection drops, ZeonVNC reconnects automatically with an
+**Reconnect** — when the connection drops, Zeon Remote reconnects automatically with an
 increasing delay. *Reconnect Now* or *Close* are always available.
 
 **Clipboard** — text copied on either side is available on the other. Turn this off
@@ -98,6 +107,27 @@ All keys go to the remote computer, including ⌘ shortcuts. Local commands use
 - Left Option is Alt, right Option is AltGr.
 - Keys held when the window loses focus are released automatically.
 
+## Remote desktop (RDP)
+
+RDP connects to Windows (Remote Desktop has to be turned on in Windows: *Settings →
+System → Remote Desktop*; Windows Home editions have no Remote Desktop server) and to
+Linux machines running xrdp or GNOME Remote Desktop.
+
+- Log in with the Windows user name and password. Use `DOMAIN\user` or
+  `user@domain` for domain accounts. The password can be saved in the Keychain, as
+  for VNC.
+- The first time, you are asked whether to trust the computer's certificate (Windows
+  uses a self-signed one). Like VNC and SSH keys, the certificate belongs to the
+  device; if it changes you are asked again.
+- The Windows desktop is created in the size of the window and follows it when you
+  resize the window or go full screen (*Resize remote screen to window*). With
+  *Pixel perfect* scaling, the default for RDP, it has the Mac's pixels and Windows
+  scales its text to match, so everything stays sharp.
+- Keyboard, special keys (Ctrl-Alt-Del, Windows key, ...), the ⌘ key setting and the
+  two keyboard layout modes work as in VNC sessions. Text is copied in both
+  directions when *Share clipboard* is on.
+- Not supported yet: sound, drives, printers, smart cards, RD Gateway.
+
 ## SSH and Telnet terminals
 
 Open a terminal with Quick Connect (`ssh user@host`), from the Address Book (type SSH
@@ -115,8 +145,16 @@ or Telnet), or from a VNC session (**SSH Terminal** button, ⌃⌥⌘E).
 ## File transfer
 
 The file transfer window shows **This Mac** on the left and the **remote device** on
-the right. It uses SFTP, so the device needs SSH (on a Raspberry Pi:
-`sudo raspi-config` → Interface Options → SSH, or `sudo systemctl enable --now ssh`).
+the right. Open it from a VNC or RDP session or an SSH terminal (it then uses SFTP to
+the same device, which needs SSH — on a Raspberry Pi: `sudo raspi-config` → Interface
+Options → SSH, or `sudo systemctl enable --now ssh`), or save an **SFTP** or
+**FTP / FTPS** connection, which opens the window directly.
+
+- **FTP / FTPS**: for NAS boxes, web hosting, cameras and other devices without SSH.
+  Choose the encryption in the connection: *FTPS (explicit)* is what most servers
+  offer on port 21, *implicit* uses port 990. Plain FTP sends the password
+  unencrypted — use it only on networks you trust. The FTPS certificate is trusted
+  per device, like SSH keys. Use `anonymous` as user name for public servers.
 
 - Drag files and folders between the panes, or select them and use **Upload →** /
   **← Download**. Double clicking a file copies it to the other side.
@@ -152,13 +190,13 @@ See [SECURITY.md](SECURITY.md) for details.
   login dialog tells you that a different device is using the address.
 - A rejected password is not deleted; you are asked again and only that device's
   entry is updated.
-- *Remove All Saved Passwords…* in Settings deletes everything ZeonVNC saved.
+- *Remove All Saved Passwords…* in Settings deletes everything Zeon Remote saved.
 
 ## Settings
 
 | Setting | |
 |---|---|
-| Send ⌘ shortcuts to the remote computer | Otherwise ⌘ shortcuts go to ZeonVNC's menus first |
+| Send ⌘ shortcuts to the remote computer | Otherwise ⌘ shortcuts go to Zeon Remote's menus first |
 | Sharp scaling | Nearest neighbour instead of smooth scaling |
 | Security | Any method, or encrypted connections only |
 | Save passwords in the Keychain | See [Passwords](#passwords) |
@@ -191,7 +229,7 @@ In terminals: ⌘+ / ⌘− font size, ⌥⌘K clear.
 
 ## Troubleshooting
 
-**"No route to host" on the local network** — allow ZeonVNC in System Settings →
+**"No route to host" on the local network** — allow Zeon Remote in System Settings →
 Privacy & Security → Local Network.
 
 **Can't connect to RealVNC Server** — RealVNC Server only accepts third party viewers
@@ -200,5 +238,5 @@ with *VNC Password* authentication (Options → Security in RealVNC Server).
 **UltraVNC server with an encryption plugin** — encryption plugins (DSM) are UltraVNC
 specific and not supported; turn the plugin off or use an SSH tunnel.
 
-**Logs** — start ZeonVNC from a terminal to see its log:
-`/Applications/ZeonVNC.app/Contents/MacOS/ZeonVNC`
+**Logs** — start Zeon Remote from a terminal to see its log:
+`"/Applications/Zeon Remote.app/Contents/MacOS/ZeonRemote"`

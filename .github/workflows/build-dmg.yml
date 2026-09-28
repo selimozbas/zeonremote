@@ -48,28 +48,46 @@ jobs:
           path: appicon
 
       - name: Install dependencies
-        run: brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
+        run: brew install cmake ninja jpeg-turbo pixman gnutls nettle libssh2 openssl@3 create-dmg
+
+      # FreeRDP for RDP, only the libraries (and the sample server for the
+      # tests); rebuilt when tools/build-freerdp.sh changes
+      - uses: actions/cache@v4
+        id: freerdp
+        with:
+          path: freerdp
+          # The libraries record their absolute path, which contains the
+          # repository name
+          key: freerdp-macos15-${{ github.event.repository.name }}-${{ hashFiles('tools/build-freerdp.sh') }}
+
+      - name: Build FreeRDP
+        if: steps.freerdp.outputs.cache-hit != 'true'
+        run: MACOSX_DEPLOYMENT_TARGET=15.0 tools/build-freerdp.sh freerdp --with-sample-server
 
       - name: Build
         run: |
           # The Homebrew libraries of the macos-15 runner need macOS 15
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=ON -DCODESIGN_IDENTITY=- \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DZV_APPICON_DIR="$PWD/appicon"
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DZV_APPICON_DIR="$PWD/appicon" \
+            -DFREERDP_DIR="$PWD/freerdp"
           cmake --build build -j
 
       - name: Test
-        run: tools/run-tests.sh build
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet pyftpdlib pyopenssl
+          PYTHON="$RUNNER_TEMP/venv/bin/python" FREERDP_DIR="$PWD/freerdp" tools/run-tests.sh build
 
       - name: Make DMG
         run: tools/make-dmg.sh
 
       - name: Check DMG
-        run: tools/check-release.sh build/ZeonVNC-*.dmg
+        run: tools/check-release.sh build/ZeonRemote-*.dmg
 
       - uses: actions/upload-artifact@v4
         with:
-          name: ZeonVNC-dmg
-          path: build/ZeonVNC-*.dmg
+          name: ZeonRemote-dmg
+          path: build/ZeonRemote-*.dmg
 
       # A version tag (v0.3.1), or a manual run with "release" checked,
       # publishes the DMG as a GitHub release for the project version, with
@@ -80,19 +98,19 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          version=$(sed -n 's/^project(ZeonVNC VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          version=$(sed -n 's/^project(ZeonRemote VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
           version="${version%.0}"
           awk -v v="$version" '/^## /{p = ($2 == v)} p' CHANGELOG.md | tail -n +2 > notes.md
-          dmg=$(ls build/ZeonVNC-*.dmg)
+          dmg=$(ls build/ZeonRemote-*.dmg)
           assets=("$dmg")
           # Signed appcast for automatic updates (see "Automatic updates" in docs/BUILDING.md)
           if [ -n "$SPARKLE_PRIVATE_KEY" ]; then
             signature=$(printf '%s' "$SPARKLE_PRIVATE_KEY" | build/sparkle-*/bin/sign_update --ed-key-file - "$dmg")
-            min=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" build/src/ZeonVNC.app/Contents/Info.plist)
+            min=$(/usr/libexec/PlistBuddy -c "Print :LSMinimumSystemVersion" build/src/ZeonRemote.app/Contents/Info.plist)
             tools/make-appcast.py "$dmg" "$signature" "$min" notes.md > build/appcast.xml
             assets+=(build/appcast.xml)
           else
             echo "::warning::SPARKLE_PRIVATE_KEY is not set, publishing without an appcast"
           fi
           gh release create "v$version" "${assets[@]}" --target "$GITHUB_SHA" \
-            --title "ZeonVNC $version" --notes-file notes.md --latest
+            --title "Zeon Remote $version" --notes-file notes.md --latest

@@ -1,4 +1,4 @@
-// ZeonVNC - window hosting a single remote desktop session
+// Zeon Remote - window hosting a single remote desktop session
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free

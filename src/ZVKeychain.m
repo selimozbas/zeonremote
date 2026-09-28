@@ -1,4 +1,4 @@
-// ZeonVNC - minimal Keychain wrapper for connection passwords
+// Zeon Remote - minimal Keychain wrapper for connection passwords
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -64,7 +64,7 @@ static NSString* const kService = @"com.zeonvnc.credentials";
                                   (__bridge CFDictionaryRef)update);
   if (status == errSecItemNotFound) {
     query[(id)kSecValueData] = data;
-    query[(id)kSecAttrLabel] = [NSString stringWithFormat:@"ZeonVNC (%@)", account];
+    query[(id)kSecAttrLabel] = [NSString stringWithFormat:@"Zeon Remote (%@)", account];
     query[(id)kSecAttrAccessible] = (id)kSecAttrAccessibleWhenUnlocked;
     status = SecItemAdd((__bridge CFDictionaryRef)query, NULL);
   }

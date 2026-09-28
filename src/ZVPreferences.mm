@@ -1,4 +1,4 @@
-// ZeonVNC - application preferences
+// Zeon Remote - application preferences
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -87,7 +87,7 @@ NSNotificationName const ZVPreferencesChangedNotification = @"ZVPreferencesChang
                                               backing:NSBackingStoreBuffered defer:NO];
   self = [super initWithWindow:w];
   if (self) {
-    w.title = @"ZeonVNC Settings";
+    w.title = @"Zeon Remote Settings";
     [self build];
     [self load];
     [w center];
@@ -210,7 +210,7 @@ NSNotificationName const ZVPreferencesChangedNotification = @"ZVPreferencesChang
 {
   NSAlert* a = [[NSAlert alloc] init];
   a.messageText = @"Remove all saved passwords?";
-  a.informativeText = @"Every password ZeonVNC saved in the Keychain is deleted. "
+  a.informativeText = @"Every password Zeon Remote saved in the Keychain is deleted. "
                       @"Saved connections are kept.";
   [a addButtonWithTitle:@"Remove"];
   [a addButtonWithTitle:@"Cancel"];

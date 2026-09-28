@@ -1,4 +1,4 @@
-// ZeonVNC - Telnet client (RFC 854) with terminal type (RFC 1091),
+// Zeon Remote - Telnet client (RFC 854) with terminal type (RFC 1091),
 // window size (NAWS, RFC 1073), echo and suppress-go-ahead negotiation
 //
 // Telnet is not encrypted; it is meant for devices that don't offer SSH

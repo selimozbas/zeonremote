@@ -1,4 +1,4 @@
-// ZeonVNC - one VNC session
+// Zeon Remote - one VNC session
 //
 // The RFB protocol is handled by the core's rfb::CConnection running on a
 // dedicated thread per session. The main thread never touches the
@@ -98,23 +98,10 @@ static ZVOptions optionsFromBookmark(ZVBookmark* b)
   return o;
 }
 
-@interface ZVSession ()
-- (void)_setState:(ZVSessionState)state;
-- (void)_didInitWithName:(NSString*)name mac:(NSString*)mac key:(NSString*)key;
-- (BOOL)_verifyServerKey:(NSString*)fingerprint mac:(NSString*)mac;
-- (void)_framebufferChanged:(IOSurfaceRef)surface width:(int)w height:(int)h;
-- (void)_framebufferUpdated;
-- (void)_nameChanged:(NSString*)name;
-- (void)_cursorChanged:(NSData*)rgba width:(int)w height:(int)h hotspot:(NSPoint)hs;
-- (void)_remoteClipboard:(NSString*)text;
-- (void)_bell;
-- (void)_closed:(ZVCloseReason)reason message:(NSString*)message;
-- (BOOL)_credentialsUser:(BOOL)needUser secure:(BOOL)secure
-                     mac:(NSString*)mac key:(NSString*)key
-                username:(std::string*)user password:(std::string*)pass;
-- (BOOL)_message:(NSString*)text title:(NSString*)title yesNo:(BOOL)yesNo
-           style:(NSAlertStyle)style;
-@end
+#import "ZVSession+Private.h"
+#ifdef ZV_RDP
+#import "ZVRDPSession.h"
+#endif
 
 static NSString* nsstr(const char* s)
 {
@@ -961,6 +948,15 @@ static uint32_t qnumForKeySym(uint32_t ks)
     _incomingFd = -1;
   }
   return self;
+}
+
++ (ZVSession*)sessionWithBookmark:(ZVBookmark*)bookmark
+{
+#ifdef ZV_RDP
+  if (bookmark.protocolType == ZVProtocolRDP)
+    return [[ZVRDPSession alloc] initWithBookmark:bookmark];
+#endif
+  return [[ZVSession alloc] initWithBookmark:bookmark];
 }
 
 - (instancetype)initWithBookmark:(ZVBookmark*)bookmark connectedSocket:(int)fd

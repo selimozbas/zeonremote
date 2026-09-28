@@ -1,4 +1,4 @@
-// ZeonVNC - application delegate, menus and keyboard routing
+// Zeon Remote - application delegate, menus and keyboard routing
 //
 // This is free software; you can redistribute it and/or modify it under
 // the terms of the GNU General Public License as published by the Free
@@ -18,6 +18,24 @@
 #import "ZVSession.h"
 #import "ZVSessionWindowController.h"
 #import "ZVTerminalWindowController.h"
+#import "ZVFileTransferWindowController.h"
+
+// Login details for a file transfer window of its own (SFTP / FTP connection)
+@interface ZVBookmarkFileContext : NSObject <ZVFileTransferContext>
+@property (nonatomic, strong) ZVBookmark* bookmark;
+@end
+
+@implementation ZVBookmarkFileContext
+- (NSString*)transferUsername { return _bookmark.username; }
+- (NSString*)transferPassword
+{
+  if (_bookmark.alwaysAskPassword ||
+      ![[NSUserDefaults standardUserDefaults] boolForKey:ZVPrefRememberPasswords])
+    return nil;
+  return [_bookmark storedPassword];
+}
+- (NSString*)transferScope { return [_bookmark credentialScope]; }
+@end
 
 #ifdef ZV_SPARKLE
 #import <Sparkle/Sparkle.h>
@@ -70,6 +88,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
   ZVPreferencesWindowController* _prefs;
   NSMutableArray<ZVSessionWindowController*>* _sessions;
   NSMutableArray<ZVTerminalWindowController*>* _terminals;
+  NSMutableArray<ZVFileTransferWindowController*>* _fileWindows;
   ZVListener* _listener;
   NSMutableArray<NSURL*>* _pendingOpen;
 #ifdef ZV_SPARKLE
@@ -84,6 +103,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
   if (self) {
     _sessions = [NSMutableArray array];
     _terminals = [NSMutableArray array];
+    _fileWindows = [NSMutableArray array];
     _pendingOpen = [NSMutableArray array];
   }
   return self;
@@ -130,7 +150,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
                                                name:ZVPreferencesChangedNotification object:nil];
   [self updateListener];
 
-  // Addresses on the command line: ZeonVNC vnc://host:port or host::port
+  // Addresses on the command line: ZeonRemote vnc://host:port or host::port
   NSArray* args = [NSProcessInfo processInfo].arguments;
   for (NSUInteger i = 1; i < args.count; i++) {
     NSString* a = args[i];
@@ -182,8 +202,8 @@ static const NSEventModifierFlags kLocalShortcutMask =
     return NSTerminateNow;
 
   NSAlert* a = [[NSAlert alloc] init];
-  a.messageText = active == 1 ? @"Quit ZeonVNC and close the open session?"
-                              : [NSString stringWithFormat:@"Quit ZeonVNC and close %lu open sessions?",
+  a.messageText = active == 1 ? @"Quit Zeon Remote and close the open session?"
+                              : [NSString stringWithFormat:@"Quit Zeon Remote and close %lu open sessions?",
                                  (unsigned long)active];
   [a addButtonWithTitle:@"Quit"];
   [a addButtonWithTitle:@"Cancel"];
@@ -204,8 +224,12 @@ static const NSEventModifierFlags kLocalShortcutMask =
 
 - (void)openSessionForBookmark:(ZVBookmark*)bookmark
 {
-  if (bookmark.protocolType != ZVProtocolVNC) {
+  if (bookmark.protocolType == ZVProtocolSSH || bookmark.protocolType == ZVProtocolTelnet) {
     [self openTerminalForBookmark:bookmark password:nil];
+    return;
+  }
+  if (bookmark.protocolType == ZVProtocolSFTP || bookmark.protocolType == ZVProtocolFTP) {
+    [self openFilesForBookmark:bookmark];
     return;
   }
 
@@ -221,6 +245,44 @@ static const NSEventModifierFlags kLocalShortcutMask =
   ZVSessionWindowController* wc = [[ZVSessionWindowController alloc] initWithBookmark:bookmark];
   [_sessions addObject:wc];
   [wc start];
+}
+
+// SFTP and FTP connections open the two pane file window directly
+- (void)openFilesForBookmark:(ZVBookmark*)bookmark
+{
+  [[ZVBookmarkStore sharedStore] noteConnectedTo:bookmark];
+  ZVBookmarkFileContext* context = [[ZVBookmarkFileContext alloc] init];
+  context.bookmark = [bookmark copy];
+  NSString* host = bookmark.host;
+  if ([host hasPrefix:@"["] && [host hasSuffix:@"]"])
+    host = [host substringWithRange:NSMakeRange(1, host.length - 2)];
+
+  ZVFileTransferWindowController* fc;
+  if (bookmark.protocolType == ZVProtocolFTP)
+    fc = [[ZVFileTransferWindowController alloc] initWithContext:context ftpHost:host
+                                                            port:(int)bookmark.ftpPort
+                                                        security:(ZVFTPSecurity)bookmark.ftpSecurity
+                                                        username:bookmark.username
+                                                           title:[bookmark displayName]];
+  else
+    fc = [[ZVFileTransferWindowController alloc] initWithContext:context host:host
+                                                            port:(int)(bookmark.sshPort ?: 22)
+                                                        username:bookmark.username
+                                                           title:[bookmark displayName]];
+  fc.ownedContext = context;
+  [_fileWindows addObject:fc];
+  __weak ZVFileTransferWindowController* weakFC = fc;
+  __block id observer = [[NSNotificationCenter defaultCenter]
+    addObserverForName:NSWindowWillCloseNotification object:fc.window queue:nil
+            usingBlock:^(NSNotification* n) {
+    [[NSNotificationCenter defaultCenter] removeObserver:observer];
+    ZVFileTransferWindowController* c = weakFC;
+    if (c) {
+      // Keep the controller alive until the current event is done
+      dispatch_async(dispatch_get_main_queue(), ^{ [self->_fileWindows removeObject:c]; });
+    }
+  }];
+  [fc showWindow:nil];
 }
 
 - (void)openTerminalForBookmark:(ZVBookmark*)bookmark password:(NSString*)password
@@ -300,7 +362,9 @@ static const NSEventModifierFlags kLocalShortcutMask =
   }
 
   NSString* scheme = url.scheme.lowercaseString;
-  if (([scheme isEqualToString:@"ssh"] || [scheme isEqualToString:@"telnet"]) && url.host.length) {
+  if (([scheme isEqualToString:@"ssh"] || [scheme isEqualToString:@"telnet"] ||
+       [scheme isEqualToString:@"rdp"] || [scheme isEqualToString:@"sftp"] ||
+       [scheme isEqualToString:@"ftp"] || [scheme isEqualToString:@"ftps"]) && url.host.length) {
     ZVBookmark* quick = [ZVBookmark bookmarkFromQuickConnect:url.absoluteString];
     [self openSessionForBookmark:[[ZVBookmarkStore sharedStore] bookmarkMatching:quick] ?: quick];
     return;
@@ -423,7 +487,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSMutableAttributedString* credits = [[NSMutableAttributedString alloc]
     initWithString:@"Remote desktops (VNC), terminals (SSH, Telnet) and file transfer (SFTP) for macOS.\n\n"
                    @"Free software under the GNU General Public License v2 or later.\n"
-                   @"github.com/selimozbas/zeonvnc"
+                   @"github.com/selimozbas/zeonremote"
         attributes:@{NSFontAttributeName: [NSFont systemFontOfSize:11],
                      NSForegroundColorAttributeName: [NSColor secondaryLabelColor]}];
   NSMutableParagraphStyle* ps = [[NSMutableParagraphStyle alloc] init];
@@ -471,8 +535,8 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSMenu* main = [[NSMenu alloc] init];
 
   // App
-  NSMenu* app = [[NSMenu alloc] initWithTitle:@"ZeonVNC"];
-  NSMenuItem* about = [self item:@"About ZeonVNC" action:@selector(showAbout:) key:@""];
+  NSMenu* app = [[NSMenu alloc] initWithTitle:@"Zeon Remote"];
+  NSMenuItem* about = [self item:@"About Zeon Remote" action:@selector(showAbout:) key:@""];
   about.target = self;
   [app addItem:about];
 #ifdef ZV_SPARKLE
@@ -492,12 +556,12 @@ static const NSEventModifierFlags kLocalShortcutMask =
   NSApp.servicesMenu = services.submenu;
   [app addItem:services];
   [app addItem:[NSMenuItem separatorItem]];
-  [app addItem:[self item:@"Hide ZeonVNC" action:@selector(hide:) key:@"h"]];
+  [app addItem:[self item:@"Hide Zeon Remote" action:@selector(hide:) key:@"h"]];
   [app addItem:[self item:@"Hide Others" action:@selector(hideOtherApplications:) key:@"h"
                      mods:NSEventModifierFlagCommand | NSEventModifierFlagOption]];
   [app addItem:[self item:@"Show All" action:@selector(unhideAllApplications:) key:@""]];
   [app addItem:[NSMenuItem separatorItem]];
-  [app addItem:[self item:@"Quit ZeonVNC" action:@selector(terminate:) key:@"q"]];
+  [app addItem:[self item:@"Quit Zeon Remote" action:@selector(terminate:) key:@"q"]];
   [self addSubmenu:app title:@"" to:main];
 
   // File

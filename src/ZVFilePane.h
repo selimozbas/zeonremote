@@ -1,4 +1,4 @@
-// ZeonVNC - one side of the file transfer window: a folder browser for
+// Zeon Remote - one side of the file transfer window: a folder browser for
 // either this Mac or the remote device (SFTP)
 //
 // This is free software; you can redistribute it and/or modify it under
@@ -65,8 +65,8 @@ extern NSPasteboardType const ZVRemotePathPasteboardType;
 
 // The remote device over SFTP
 @interface ZVRemoteFilePane : ZVFilePane
-- (instancetype)initWithClient:(ZVSFTPClient*)client;
-@property (nonatomic, readonly) ZVSFTPClient* client;
+- (instancetype)initWithClient:(id<ZVFileClient>)client;
+@property (nonatomic, readonly) id<ZVFileClient> client;
 @end
 
 NS_ASSUME_NONNULL_END

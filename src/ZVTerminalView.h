@@ -1,4 +1,4 @@
-// ZeonVNC - Objective-C interface of the Swift terminal view
+// Zeon Remote - Objective-C interface of the Swift terminal view
 // (terminal/Sources/ZVTerminalKit/ZVTerminalView.swift, built on SwiftTerm)
 //
 // This is free software; you can redistribute it and/or modify it under

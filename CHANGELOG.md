@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.4 — 2026-09-28
+
+- **ZeonVNC is now Zeon Remote**: VNC, RDP, SSH, Telnet, SFTP and FTP in one app.
+  Saved connections, Keychain passwords and settings carry over. The download is
+  `ZeonRemote-<version>.dmg` and installs `Zeon Remote.app`
+- RDP: connect to Windows Remote Desktop (and xrdp) in a ZeonVNC window, built on
+  FreeRDP 3: NLA / TLS, graphics pipeline, desktop follows the window size,
+  keyboard, mouse, text clipboard, certificates trusted per device
+- FTP and FTPS (explicit and implicit TLS) file transfer, for NAS boxes, web hosting
+  and devices without SSH; the FTPS certificate is checked before the password is
+  sent
+- SFTP and FTP connections of their own in the address book and Quick Connect
+  (`sftp user@host`, `ftp host`, `ftps://user@host`), opening the file window
+  directly
+- Fix: the port of saved SSH connections could be reset by a hidden field
+- Quick Connect: a menu next to the address picks the protocol (VNC, SSH, Telnet,
+  RDP) for addresses typed without one; `vnc://host:port` works there too
+- Every build runs an RDP test against FreeRDP's sample server and FTP / FTPS tests
+
 ## 0.3.3 — 2026-09-27
 
 - Automatic updates (Sparkle): ZeonVNC → Check for Updates…, and a daily check

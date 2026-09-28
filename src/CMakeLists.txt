@@ -6,6 +6,8 @@ set(ZV_SOURCES
   ZVConnectionsWindowController.mm
   ZVFilePane.mm
   ZVFileTransferWindowController.mm
+  ZVFTPClient.mm
+  ftp/ZVFtpConnection.cpp
   ZVFramebuffer.mm
   ZVKeychain.m
   ZVListener.m
@@ -69,28 +71,38 @@ else()
   message(STATUS "App icon: ZeonVNC.icns")
 endif()
 
-add_executable(ZeonVNC MACOSX_BUNDLE ${ZV_SOURCES})
+if(ENABLE_RDP)
+  list(APPEND ZV_SOURCES ZVRDPSession.mm rdp/ZVRdpClient.cpp)
+  set_source_files_properties(rdp/ZVRdpClient.cpp PROPERTIES COMPILE_OPTIONS -Wno-deprecated-declarations)
+endif()
 
-set_target_properties(ZeonVNC PROPERTIES
-  OUTPUT_NAME ZeonVNC
+add_executable(ZeonRemote MACOSX_BUNDLE ${ZV_SOURCES})
+
+if(ENABLE_RDP)
+  target_compile_definitions(ZeonRemote PRIVATE ZV_RDP=1)
+  target_link_libraries(ZeonRemote freerdp-client freerdp winpr)
+endif()
+
+set_target_properties(ZeonRemote PROPERTIES
+  OUTPUT_NAME ZeonRemote
   MACOSX_BUNDLE_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/Info.plist.in)
 
 # Automatic updates
 set(ZV_SPARKLE_ENTRIES "")
 if(ENABLE_SPARKLE)
-  target_compile_definitions(ZeonVNC PRIVATE ZV_SPARKLE=1)
-  target_compile_options(ZeonVNC PRIVATE -F${SPARKLE_DIR})
-  target_link_options(ZeonVNC PRIVATE -F${SPARKLE_DIR} -Wl,-rpath,@executable_path/../Frameworks)
-  target_link_libraries(ZeonVNC "-framework Sparkle")
-  add_custom_command(TARGET ZeonVNC POST_BUILD
-    COMMAND rm -rf $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks/Sparkle.framework
+  target_compile_definitions(ZeonRemote PRIVATE ZV_SPARKLE=1)
+  target_compile_options(ZeonRemote PRIVATE -F${SPARKLE_DIR})
+  target_link_options(ZeonRemote PRIVATE -F${SPARKLE_DIR} -Wl,-rpath,@executable_path/../Frameworks)
+  target_link_libraries(ZeonRemote "-framework Sparkle")
+  add_custom_command(TARGET ZeonRemote POST_BUILD
+    COMMAND rm -rf $<TARGET_BUNDLE_CONTENT_DIR:ZeonRemote>/Frameworks/Sparkle.framework
     COMMAND ditto ${SPARKLE_DIR}/Sparkle.framework
-            $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks/Sparkle.framework
+            $<TARGET_BUNDLE_CONTENT_DIR:ZeonRemote>/Frameworks/Sparkle.framework
     VERBATIM)
   if(NOT SPARKLE_PUBLIC_KEY STREQUAL "")
     string(CONCAT ZV_SPARKLE_ENTRIES
       "<key>SUFeedURL</key>\n"
-      "  <string>https://github.com/selimozbas/zeonvnc/releases/latest/download/appcast.xml</string>\n"
+      "  <string>https://github.com/selimozbas/zeonremote/releases/latest/download/appcast.xml</string>\n"
       "  <key>SUPublicEDKey</key>\n"
       "  <string>${SPARKLE_PUBLIC_KEY}</string>\n"
       "  <key>SUEnableAutomaticChecks</key>\n"
@@ -101,20 +113,21 @@ endif()
 # The Info.plist template uses @VAR@ placeholders
 configure_file(${CMAKE_SOURCE_DIR}/resources/Info.plist.in
                ${CMAKE_CURRENT_BINARY_DIR}/Info.plist @ONLY)
-set_target_properties(ZeonVNC PROPERTIES
+set_target_properties(ZeonRemote PROPERTIES
   MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_BINARY_DIR}/Info.plist)
 
-target_compile_options(ZeonVNC PRIVATE
+target_compile_options(ZeonRemote PRIVATE
   $<$<COMPILE_LANGUAGE:OBJC,OBJCXX>:-fobjc-arc>
   -Wno-unused-parameter)
 
-target_include_directories(ZeonVNC PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ZV_COMMON_DIR}/keyboard)
+target_include_directories(ZeonRemote PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ZV_COMMON_DIR}/keyboard)
 
 # SSH / SFTP for file transfer
-target_include_directories(ZeonVNC SYSTEM PRIVATE ${LIBSSH2_INCLUDE_DIR})
-target_link_libraries(ZeonVNC ${LIBSSH2_LIBRARY})
+target_include_directories(ZeonRemote SYSTEM PRIVATE ${LIBSSH2_INCLUDE_DIR})
+target_link_libraries(ZeonRemote ${LIBSSH2_LIBRARY})
+target_link_libraries(ZeonRemote OpenSSL::SSL OpenSSL::Crypto)
 
-target_link_libraries(ZeonVNC rfb network rdr core
+target_link_libraries(ZeonRemote rfb network rdr core
   "-framework Cocoa"
   "-framework Metal"
   "-framework MetalKit"
@@ -130,11 +143,11 @@ target_link_libraries(ZeonVNC rfb network rdr core
 set_source_files_properties(${ZV_COMMON_DIR}/keyboard/KeyboardMacOS.mm PROPERTIES COMPILE_OPTIONS -fno-objc-arc)
 
 # License texts inside the bundle (Contents/Resources/Licenses)
-add_custom_command(TARGET ZeonVNC POST_BUILD
+add_custom_command(TARGET ZeonRemote POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/licenses
-          $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Resources/Licenses
+          $<TARGET_BUNDLE_CONTENT_DIR:ZeonRemote>/Resources/Licenses
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/THIRD_PARTY_NOTICES.md
-          $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Resources/Licenses/
+          $<TARGET_BUNDLE_CONTENT_DIR:ZeonRemote>/Resources/Licenses/
   VERBATIM)
 
 # Terminal view (Swift, SwiftTerm), built with SwiftPM as a dynamic library
@@ -148,11 +161,11 @@ add_custom_command(OUTPUT ${ZV_TERMINAL_LIB}
   COMMENT "Building terminal view (Swift)"
   VERBATIM)
 add_custom_target(zvterminal DEPENDS ${ZV_TERMINAL_LIB})
-add_dependencies(ZeonVNC zvterminal)
-target_link_libraries(ZeonVNC ${ZV_TERMINAL_LIB})
-add_custom_command(TARGET ZeonVNC POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks
-  COMMAND ${CMAKE_COMMAND} -E copy ${ZV_TERMINAL_LIB} $<TARGET_BUNDLE_CONTENT_DIR:ZeonVNC>/Frameworks/
+add_dependencies(ZeonRemote zvterminal)
+target_link_libraries(ZeonRemote ${ZV_TERMINAL_LIB})
+add_custom_command(TARGET ZeonRemote POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_BUNDLE_CONTENT_DIR:ZeonRemote>/Frameworks
+  COMMAND ${CMAKE_COMMAND} -E copy ${ZV_TERMINAL_LIB} $<TARGET_BUNDLE_CONTENT_DIR:ZeonRemote>/Frameworks/
   VERBATIM)
 
 # Make the bundle self-contained (copies Homebrew libraries into it)
@@ -175,7 +188,7 @@ endif()
 message(STATUS "Code signing identity: ${CODESIGN_IDENTITY}")
 
 if(BUNDLE_DYLIBS)
-  add_custom_command(TARGET ZeonVNC POST_BUILD
-    COMMAND ${CMAKE_SOURCE_DIR}/tools/bundle-dylibs.sh $<TARGET_BUNDLE_DIR:ZeonVNC> ${CODESIGN_IDENTITY}
+  add_custom_command(TARGET ZeonRemote POST_BUILD
+    COMMAND ${CMAKE_SOURCE_DIR}/tools/bundle-dylibs.sh $<TARGET_BUNDLE_DIR:ZeonRemote> ${CODESIGN_IDENTITY}
     VERBATIM)
 endif()

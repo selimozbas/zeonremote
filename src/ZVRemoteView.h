@@ -1,4 +1,4 @@
-// ZeonVNC - Metal view showing the remote framebuffer and forwarding
+// Zeon Remote - Metal view showing the remote framebuffer and forwarding
 // local input to the session.
 //
 // This is free software; you can redistribute it and/or modify it under

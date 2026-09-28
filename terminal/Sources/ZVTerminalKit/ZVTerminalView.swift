@@ -1,4 +1,4 @@
-// ZeonVNC - terminal view for SSH / Telnet sessions.
+// Zeon Remote - terminal view for SSH / Telnet sessions.
 //
 // Wraps SwiftTerm's TerminalView (an xterm compatible emulator) behind a
 // small Objective-C API; see ZVTerminalView.h on the app side.

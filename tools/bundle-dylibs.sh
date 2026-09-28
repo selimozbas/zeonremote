@@ -3,7 +3,7 @@
 # Contents/Frameworks, rewrites their install names and ad-hoc signs the
 # result so the app runs on Macs without Homebrew.
 #
-# Usage: tools/bundle-dylibs.sh path/to/ZeonVNC.app [signing identity]
+# Usage: tools/bundle-dylibs.sh path/to/ZeonRemote.app [signing identity]
 #
 # Without an identity the bundle is signed ad hoc. Ad hoc signatures
 # change on every build, which makes macOS forget Keychain access and

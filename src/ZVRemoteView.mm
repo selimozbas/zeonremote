@@ -1,4 +1,4 @@
-// ZeonVNC - Metal view showing the remote framebuffer
+// Zeon Remote - Metal view showing the remote framebuffer
 //
 // The framebuffer is an IOSurface written directly by the decoders; the
 // view wraps it in a Metal texture (no copies) and draws it scaled. For
@@ -149,7 +149,7 @@ void ZVKeyHandler::handleKeyRelease(int systemKeyCode)
   NSError* err = nil;
   id<MTLLibrary> lib = [device newLibraryWithSource:kShaderSource options:nil error:&err];
   if (!lib) {
-    NSLog(@"ZeonVNC: shader compilation failed: %@", err);
+    NSLog(@"Zeon Remote: shader compilation failed: %@", err);
     return;
   }
 
@@ -159,7 +159,7 @@ void ZVKeyHandler::handleKeyRelease(int systemKeyCode)
   pd.colorAttachments[0].pixelFormat = self.colorPixelFormat;
   _pipeline = [device newRenderPipelineStateWithDescriptor:pd error:&err];
   if (!_pipeline)
-    NSLog(@"ZeonVNC: pipeline creation failed: %@", err);
+    NSLog(@"Zeon Remote: pipeline creation failed: %@", err);
 
   MTLSamplerDescriptor* sd = [[MTLSamplerDescriptor alloc] init];
   sd.sAddressMode = MTLSamplerAddressModeClampToEdge;

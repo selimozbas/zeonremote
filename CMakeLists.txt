@@ -1,5 +1,5 @@
 #
-# ZeonVNC - native macOS client for VNC, SSH, Telnet and SFTP
+# Zeon Remote - native macOS client for VNC, RDP, SSH, Telnet, SFTP and FTP
 #
 # Licensed under the GNU GPL, version 2 or later (see LICENSE). Code in
 # third_party/ keeps its own copyright notices and licenses
@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.20)
 # version of the build machine and the app refuses to start on older ones
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS version")
 
-project(ZeonVNC VERSION 0.3.3 LANGUAGES C CXX OBJC OBJCXX)
+project(ZeonRemote VERSION 0.3.4 LANGUAGES C CXX OBJC OBJCXX)
 
 if(NOT APPLE)
   message(FATAL_ERROR "ZeonVNC only supports macOS")
@@ -75,6 +75,12 @@ if(ENABLE_H264)
 endif()
 add_definitions(-DH264_${H264_LIBS})
 
+# OpenSSL (Homebrew's openssl@3, also used by libssh2) for FTPS
+if(BREW_PREFIX AND NOT OPENSSL_ROOT_DIR AND EXISTS ${BREW_PREFIX}/opt/openssl@3)
+  set(OPENSSL_ROOT_DIR ${BREW_PREFIX}/opt/openssl@3)
+endif()
+find_package(OpenSSL 3 REQUIRED)
+
 find_path(LIBSSH2_INCLUDE_DIR libssh2_sftp.h REQUIRED)
 find_library(LIBSSH2_LIBRARY ssh2 REQUIRED)
 
@@ -107,6 +113,22 @@ if(ENABLE_SPARKLE)
   endif()
 endif()
 
+option(ENABLE_RDP "RDP connections with FreeRDP 3 (tools/build-freerdp.sh)" ON)
+set(FREERDP_DIR "" CACHE PATH "FreeRDP prefix built by tools/build-freerdp.sh")
+if(ENABLE_RDP)
+  if(FREERDP_DIR)
+    list(APPEND CMAKE_PREFIX_PATH ${FREERDP_DIR})
+  endif()
+  find_package(FreeRDP-Client 3 CONFIG QUIET)
+  if(FreeRDP-Client_FOUND)
+    message(STATUS "RDP: FreeRDP ${FreeRDP-Client_VERSION}")
+  else()
+    message(WARNING "FreeRDP 3 not found, building without RDP. Run tools/build-freerdp.sh <prefix> "
+                    "and configure with -DFREERDP_DIR=<prefix>.")
+    set(ENABLE_RDP OFF)
+  endif()
+endif()
+
 #### RFB protocol core ####
 
 set(ZV_COMMON_DIR ${CMAKE_SOURCE_DIR}/third_party/rfbcore)
@@ -126,6 +148,17 @@ endif()
 if(BUILD_TESTSERVER)
   add_executable(zv-vnctest tools/zv-vnctest.cxx)
   target_link_libraries(zv-vnctest rfb network rdr core)
+endif()
+if(BUILD_TESTSERVER)
+  add_executable(zv-ftptest tools/zv-ftptest.cpp src/ftp/ZVFtpConnection.cpp)
+  target_include_directories(zv-ftptest PRIVATE src/ftp)
+  target_link_libraries(zv-ftptest OpenSSL::SSL OpenSSL::Crypto)
+endif()
+if(BUILD_TESTSERVER AND ENABLE_RDP)
+  add_executable(zv-rdptest tools/zv-rdptest.cpp src/rdp/ZVRdpClient.cpp)
+  target_include_directories(zv-rdptest PRIVATE src/rdp)
+  target_compile_options(zv-rdptest PRIVATE -Wno-deprecated-declarations)
+  target_link_libraries(zv-rdptest freerdp-client freerdp winpr)
 endif()
 if(BUILD_TESTSERVER AND ENABLE_H264)
   add_executable(zv-h264test tools/zv-h264test.cxx)

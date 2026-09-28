@@ -1,4 +1,4 @@
-// ZeonVNC - listens for reverse ("listening viewer") connections, as
+// Zeon Remote - listens for reverse ("listening viewer") connections, as
 // used by UltraVNC / TightVNC servers' "Add new client" feature.
 //
 // This is free software; you can redistribute it and/or modify it under

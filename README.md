@@ -1,26 +1,30 @@
 <p align="center">
-  <img src="docs/images/icon.png" width="128" alt="ZeonVNC icon">
+  <img src="docs/images/icon.png" width="128" alt="Zeon Remote icon">
 </p>
 
-<h1 align="center">ZeonVNC</h1>
+<h1 align="center">Zeon Remote</h1>
 
 <p align="center">
-  A fast, native macOS client for <b>VNC</b>, <b>SSH</b>, <b>Telnet</b> and <b>SFTP</b> —
-  remote desktops, terminals and file transfer in one app.
+  A fast, native macOS client for <b>VNC</b>, <b>RDP</b>, <b>SSH</b>, <b>Telnet</b>,
+  <b>SFTP</b> and <b>FTP / FTPS</b> — remote desktops, terminals and file transfer in one app.
 </p>
 
 <p align="center">
-  <a href="https://github.com/selimozbas/zeonvnc/releases/latest"><b>Download</b></a> ·
+  <a href="https://github.com/selimozbas/zeonremote/releases/latest"><b>Download</b></a> ·
   <a href="docs/USER_GUIDE.md">User guide</a> ·
   <a href="docs/BUILDING.md">Building</a>
 </p>
 
 ---
 
-ZeonVNC is built for macOS with AppKit and Metal. It connects to standard VNC
+Zeon Remote is built for macOS with AppKit and Metal. It connects to standard VNC
 servers (UltraVNC, TightVNC, RealVNC with VNC password authentication, WayVNC on the
-Raspberry Pi, x11vnc and others), opens SSH and Telnet terminals, and moves files
-over SFTP in a two pane window — handy for labs and offices full of test devices.
+Raspberry Pi, x11vnc and others) and to Windows over RDP, opens SSH and Telnet
+terminals, and moves files over SFTP and FTP in a two pane window — handy for labs
+and offices full of test devices.
+
+Zeon Remote was called **ZeonVNC** up to version 0.3.3. Saved connections, passwords
+and settings carry over; after installing Zeon Remote you can delete `ZeonVNC.app`.
 
 <p align="center">
   <img src="docs/images/connections.png" width="820" alt="Connection manager">
@@ -51,6 +55,14 @@ over SFTP in a two pane window — handy for labs and offices full of test devic
   <img src="docs/images/vnc-session.png" width="820" alt="VNC session">
 </p>
 
+### Remote desktop (RDP)
+- Windows Remote Desktop (and xrdp, GNOME Remote Desktop) with FreeRDP: network
+  level authentication (NLA), TLS, the modern graphics pipeline
+- The Windows desktop follows the window size, at the Mac's pixel density
+- Keyboard, mouse, wheel, two-way clipboard (text), the same special keys and
+  scaling modes as VNC sessions
+- Certificates are trusted per device, like VNC and SSH keys
+
 ### SSH and Telnet terminals
 - xterm-256color terminal: vim, htop, tmux, nano, colours and mouse work
 - SSH login with ssh-agent, keys from `~/.ssh` or a password; Telnet with terminal
@@ -62,7 +74,10 @@ over SFTP in a two pane window — handy for labs and offices full of test devic
   <img src="docs/images/terminal.png" width="700" alt="SSH terminal">
 </p>
 
-### File transfer (SFTP)
+### File transfer (SFTP, FTP, FTPS)
+- SFTP to anything with SSH, FTP and FTPS (TLS, explicit and implicit) for NAS boxes,
+  web hosting, cameras and other devices without SSH — as connections of their own or
+  from a VNC / RDP session or SSH terminal
 - Two panes: this Mac on the left, the remote device on the right; drag and drop in
   both directions, Upload / Download buttons, double click to copy across
 - Asks what to do when a file already exists — **Replace, Keep Both, Skip or Stop** —
@@ -88,26 +103,26 @@ over SFTP in a two pane window — handy for labs and offices full of test devic
 
 ## Install
 
-Download `ZeonVNC-0.3.3.dmg` from the
-[releases page](https://github.com/selimozbas/zeonvnc/releases/latest), open it and
-drag ZeonVNC to Applications.
+Download `ZeonRemote-0.3.4.dmg` from the
+[releases page](https://github.com/selimozbas/zeonremote/releases/latest), open it and
+drag Zeon Remote to Applications.
 
 **Requirements:** a Mac with Apple silicon, macOS 15 Sequoia or later.
 
 The release is not notarized by Apple yet, so macOS says *"Apple could not verify
-"ZeonVNC" is free of malware"* on the first start. Click **Done** (not Move to Trash),
-then open **System Settings → Privacy & Security**, scroll down to *"ZeonVNC" was
+"Zeon Remote" is free of malware"* on the first start. Click **Done** (not Move to Trash),
+then open **System Settings → Privacy & Security**, scroll down to *"Zeon Remote" was
 blocked…*, click **Open Anyway** and confirm with your password. (Right click → Open
 no longer works on macOS 15 and later.)
 
 Or run once in Terminal:
 
 ```bash
-xattr -dr com.apple.quarantine /Applications/ZeonVNC.app
+xattr -dr com.apple.quarantine "/Applications/Zeon Remote.app"
 ```
 
 When you first connect to a device on your local network, macOS asks whether
-ZeonVNC may access the local network — allow it.
+Zeon Remote may access the local network — allow it.
 
 ## Documentation
 
@@ -122,12 +137,12 @@ ZeonVNC may access the local network — allow it.
 ## Contributing
 
 Bug reports and pull requests are welcome. Please describe the server (product and
-version) for connection problems; the log is printed when ZeonVNC is started from a
-terminal: `/Applications/ZeonVNC.app/Contents/MacOS/ZeonVNC`.
+version) for connection problems; the log is printed when Zeon Remote is started from a
+terminal: `"/Applications/Zeon Remote.app/Contents/MacOS/ZeonRemote"`.
 
 ## License
 
-ZeonVNC is free software under the **GNU General Public License, version 2 or (at
+Zeon Remote is free software under the **GNU General Public License, version 2 or (at
 your option) any later version** — see [LICENSE](LICENSE). Binary releases bundle
 further libraries and are distributed under GPL-3.0-or-later; see
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

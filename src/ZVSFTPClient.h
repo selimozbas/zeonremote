@@ -1,4 +1,4 @@
-// ZeonVNC - SFTP client (libssh2) used for file transfer to devices that
+// Zeon Remote - SFTP client (libssh2) used for file transfer to devices that
 // offer SSH, such as a Raspberry Pi. All network work happens on a
 // private serial queue; completion blocks are called on the main thread.
 //
@@ -9,46 +9,12 @@
 
 #import <Foundation/Foundation.h>
 
+#import "ZVFileClient.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @class ZVSFTPClient;
 
-@interface ZVRemoteFile : NSObject
-@property (nonatomic, copy) NSString* name;
-@property (nonatomic, copy) NSString* path;
-@property (nonatomic) BOOL isDirectory;
-@property (nonatomic) BOOL isSymlink;
-@property (nonatomic) unsigned long long size;
-@property (nonatomic, strong, nullable) NSDate* modified;
-@property (nonatomic) unsigned long permissions;
-@end
-
-typedef NS_ENUM(NSInteger, ZVConflictAction) {
-  ZVConflictReplace = 0,
-  ZVConflictKeepBoth,     // transfer under a new name ("name 2.ext")
-  ZVConflictSkip,
-  ZVConflictStop,         // cancel the whole transfer
-};
-
-// A file that already exists at the destination
-@interface ZVTransferConflict : NSObject
-@property (nonatomic) BOOL upload;
-@property (nonatomic, copy) NSString* name;
-@property (nonatomic, copy) NSString* destination;   // folder, for display
-@property (nonatomic) unsigned long long existingSize;
-@property (nonatomic, strong, nullable) NSDate* existingDate;
-@property (nonatomic) BOOL existingIsDirectory;
-@property (nonatomic) unsigned long long incomingSize;
-@property (nonatomic, strong, nullable) NSDate* incomingDate;
-@end
-
-typedef struct {
-  unsigned long long bytesDone;
-  unsigned long long bytesTotal;
-  NSUInteger filesDone;
-  NSUInteger filesTotal;
-  __unsafe_unretained NSString* _Nullable currentName;
-} ZVTransferProgress;
 
 @protocol ZVSFTPClientDelegate <NSObject>
 // Main thread; return YES to trust. "fingerprint" is "ssh:<sha256 hex>",
@@ -68,7 +34,7 @@ typedef struct {
                   failed:(BOOL)previousFailed;
 @end
 
-@interface ZVSFTPClient : NSObject
+@interface ZVSFTPClient : NSObject <ZVFileClient>
 
 - (instancetype)initWithHost:(NSString*)host port:(int)port;
 
