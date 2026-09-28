@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.5 — 2026-09-28
+
+- Terminal: pasted line breaks are sent as a single Return. Commands copied from
+  web pages (CRLF line ends) no longer run early when a line ends with `\`
+- File transfer: a file window whose connection failed (for example while SSH was
+  still turned off on the device) connects again when it is reopened or when
+  Refresh or Home is clicked
+
 ## 0.3.4 — 2026-09-28
 
 - **ZeonVNC is now Zeon Remote**: VNC, RDP, SSH, Telnet, SFTP and FTP in one app.
