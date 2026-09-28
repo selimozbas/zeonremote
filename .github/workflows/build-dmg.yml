@@ -56,7 +56,9 @@ jobs:
         id: freerdp
         with:
           path: freerdp
-          key: freerdp-macos15-${{ hashFiles('tools/build-freerdp.sh') }}
+          # The libraries record their absolute path, which contains the
+          # repository name
+          key: freerdp-macos15-${{ github.event.repository.name }}-${{ hashFiles('tools/build-freerdp.sh') }}
 
       - name: Build FreeRDP
         if: steps.freerdp.outputs.cache-hit != 'true'

@@ -94,8 +94,8 @@ static uint32_t qnumForKeySym(uint32_t ks)
 class ZVRDPBridge : public ZVRdpClient::Delegate {
 public:
   explicit ZVRDPBridge(ZVRDPSession* session, NSString* host, int port, NSString* user)
-    : session_(session), host_(host), port_(port), user_(user),
-      current_(nullptr), previous_(nullptr), redrawPending(false) {}
+    : redrawPending(false), session_(session), host_(host), port_(port), user_(user),
+      current_(nullptr), previous_(nullptr) {}
 
   ~ZVRDPBridge() override
   {
