@@ -3,6 +3,7 @@
 - [Connecting](#connecting)
 - [Remote desktop (VNC)](#remote-desktop-vnc)
 - [Keyboard](#keyboard)
+- [Remote desktop (RDP)](#remote-desktop-rdp)
 - [SSH and Telnet terminals](#ssh-and-telnet-terminals)
 - [File transfer](#file-transfer)
 - [Passwords](#passwords)
@@ -131,7 +132,7 @@ Linux machines running xrdp or GNOME Remote Desktop.
 ## SSH and Telnet terminals
 
 Open a terminal with Quick Connect (`ssh user@host`), from the Address Book (type SSH
-or Telnet), or from a VNC session (**SSH Terminal** button, ⌃⌥⌘E).
+or Telnet), or from a VNC or RDP session (**SSH Terminal** button, ⌃⌥⌘E).
 
 - SSH logs in with ssh-agent keys, unencrypted keys in `~/.ssh`, a saved password or
   asks you. From a VNC session, the VNC user name and password are tried first.
@@ -205,7 +206,7 @@ See [SECURITY.md](SECURITY.md) for details.
 
 ## Keyboard shortcuts
 
-In a VNC session window:
+In a VNC or RDP session window:
 
 | Shortcut | |
 |---|---|
@@ -237,6 +238,25 @@ with *VNC Password* authentication (Options → Security in RealVNC Server).
 
 **UltraVNC server with an encryption plugin** — encryption plugins (DSM) are UltraVNC
 specific and not supported; turn the plugin off or use an SSH tunnel.
+
+**RDP: "connection failed" or no login** — Remote Desktop has to be turned on in
+Windows (*Settings → System → Remote Desktop*; Windows Home editions can't be
+connected to). Check that port 3389 is open in the Windows firewall and use the
+Windows account's user name (`DOMAIN\user` or `user@domain` for domain accounts;
+for a Microsoft account, the e-mail address).
+
+**RDP: "account restriction" or "logon type not granted"** — the account has no
+password or isn't allowed to sign in remotely (*Select users that can remotely
+access this PC* in the Remote Desktop settings).
+
+**FTP: logs in but the folder list never appears** — a firewall between you and the
+server blocks the data connection. Zeon Remote uses passive mode; the server's passive
+port range must be open. With FTPS the firewall can't see which ports are used, so
+open the range on the server side.
+
+**FTPS: "does not support FTPS (AUTH TLS)" or no answer** — the server uses implicit
+FTPS (usually port 990) or plain FTP; pick the other encryption option in the
+connection.
 
 **Logs** — start Zeon Remote from a terminal to see its log:
 `"/Applications/Zeon Remote.app/Contents/MacOS/ZeonRemote"`
