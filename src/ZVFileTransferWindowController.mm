@@ -179,6 +179,7 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
   NSButton* _downloadButton;
   NSButton* _queueButton;
   BOOL _started;
+  BOOL _connecting;
 
   // Transfers run one after another; finished ones stay listed until cleared
   NSMutableArray<ZVTransferJob*>* _jobs;
@@ -417,14 +418,21 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
     _started = YES;
     [_local navigateTo:[_local homePath]];
     [self connectRemote];
+  } else if (!_remote.path) {
+    // The last attempt failed (e.g. SSH was still off on the device): try again
+    [self connectRemote];
   }
 }
 
 - (void)connectRemote
 {
+  if (_connecting)
+    return;
+  _connecting = YES;
   [_remote setStatus:[NSString stringWithFormat:@"Connecting to %@…", _client.host]];
   _status.stringValue = @"";
   [_client connect:^(NSError* error) {
+    self->_connecting = NO;
     if (error) {
       [self->_remote setStatus:error.code == NSUserCancelledError ? @"Not connected" : error.localizedDescription];
       [self filePane:self->_remote showError:error];
@@ -442,6 +450,12 @@ static NSString* ZVFormatDuration(NSTimeInterval t)
 }
 
 #pragma mark Pane delegate
+
+- (void)filePaneNeedsConnection:(ZVFilePane*)pane
+{
+  if (pane == _remote)
+    [self connectRemote];
+}
 
 - (void)filePaneDidChange:(ZVFilePane*)pane
 {

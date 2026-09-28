@@ -25,6 +25,9 @@ extern NSPasteboardType const ZVRemotePathPasteboardType;
 - (void)filePaneRequestsTransfer:(ZVFilePane*)pane;
 - (void)filePane:(ZVFilePane*)pane showError:(NSError*)error;
 - (void)filePaneDidChange:(ZVFilePane*)pane;
+@optional
+// Refresh or Home while nothing is shown because the connection failed
+- (void)filePaneNeedsConnection:(ZVFilePane*)pane;
 @end
 
 @interface ZVFilePane : NSViewController <NSTableViewDataSource, NSTableViewDelegate,

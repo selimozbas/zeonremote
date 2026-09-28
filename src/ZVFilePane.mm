@@ -265,6 +265,8 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
     [self loadPath:_path addToHistory:NO];
   else if ([self homePath])
     [self loadPath:[self homePath] addToHistory:NO];
+  else if ([self.delegate respondsToSelector:@selector(filePaneNeedsConnection:)])
+    [self.delegate filePaneNeedsConnection:self];
 }
 
 #pragma mark Sorting and filtering
@@ -380,6 +382,8 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
 {
   if ([self homePath])
     [self navigateTo:[self homePath]];
+  else if ([self.delegate respondsToSelector:@selector(filePaneNeedsConnection:)])
+    [self.delegate filePaneNeedsConnection:self];
 }
 
 - (IBAction)refresh:(id)sender
