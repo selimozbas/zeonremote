@@ -1,0 +1,29 @@
+name: Screenshot probe
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths: [".github/workflows/screenshot-probe.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Capture the screen
+        run: |
+          mkdir -p probe
+          screencapture -x probe/screen.png || echo "screencapture failed: $?"
+          ls -la probe
+          system_profiler SPDisplaysDataType | head -30
+      - name: Push the result
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout -B screenshot-probe
+          git add -f probe
+          git commit -m "Screenshot probe" || true
+          git push -f origin screenshot-probe
