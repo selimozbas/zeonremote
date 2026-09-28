@@ -69,7 +69,17 @@ else()
   message(STATUS "App icon: ZeonVNC.icns")
 endif()
 
+if(ENABLE_RDP)
+  list(APPEND ZV_SOURCES ZVRDPSession.mm rdp/ZVRdpClient.cpp)
+  set_source_files_properties(rdp/ZVRdpClient.cpp PROPERTIES COMPILE_OPTIONS -Wno-deprecated-declarations)
+endif()
+
 add_executable(ZeonVNC MACOSX_BUNDLE ${ZV_SOURCES})
+
+if(ENABLE_RDP)
+  target_compile_definitions(ZeonVNC PRIVATE ZV_RDP=1)
+  target_link_libraries(ZeonVNC freerdp-client freerdp winpr)
+endif()
 
 set_target_properties(ZeonVNC PROPERTIES
   OUTPUT_NAME ZeonVNC

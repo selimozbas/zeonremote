@@ -11,6 +11,20 @@
 brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
 ```
 
+## FreeRDP (RDP connections)
+
+RDP uses [FreeRDP](https://www.freerdp.com) 3. Build a small copy of it once (only
+the libraries, without ffmpeg, X11 or audio back ends; needs `ninja` and
+`openssl@3` from Homebrew):
+
+```bash
+tools/build-freerdp.sh ~/freerdp
+```
+
+and pass `-DFREERDP_DIR=~/freerdp` to the CMake configure step below. Without it
+ZeonVNC builds without RDP. `--with-sample-server` also builds FreeRDP's sample
+server, which the RDP test uses.
+
 ## Build
 
 ```bash
@@ -39,6 +53,8 @@ The result runs on Macs without Homebrew.
 | `ENABLE_H264` | ON | H.264 via VideoToolbox |
 | `BUNDLE_DYLIBS` | ON | Copy libraries into the app bundle |
 | `ENABLE_SPARKLE` | ON | Automatic updates (downloads Sparkle when configuring) |
+| `ENABLE_RDP` | ON | RDP connections (needs `FREERDP_DIR`, see above) |
+| `FREERDP_DIR` | – | FreeRDP prefix from `tools/build-freerdp.sh` |
 | `CMAKE_OSX_DEPLOYMENT_TARGET` | 13.0 | Oldest macOS the app starts on (`LSMinimumSystemVersion`) |
 | `CODESIGN_IDENTITY` | first "Apple Development" identity, else `-` | Signing identity (`-` = ad hoc) |
 | `BUILD_TESTSERVER` | ON | Development tools (see below) |
@@ -117,10 +133,12 @@ Built with `BUILD_TESTSERVER=ON` into `build/`:
 | `zv-h264test in.h264 w h out.ppm` | Decodes an H.264 stream with the VideoToolbox decoder |
 | `zv-sftptest host port user localdir remotedir downloaddir` | SFTP round trip |
 | `zv-sftpconflict …` | Same with conflict answers (Keep Both / Skip / Stop) |
+| `zv-rdptest` | Headless RDP client (the app's RDP core): `-port N`, `-user U`, `-password P`, `-size WxH` |
 | `zv-vnctest` | Headless VNC client used by the tests: `-port N`, `-password PW`, `-encoding raw\|hextile\|tight\|zrle`, `-security TYPE`, `-expect-auth-failure` |
 
-`tools/run-tests.sh` runs the VNC and SFTP tests against local servers (the SFTP
-part starts a private `sshd` on port 2222 with a throwaway key), and
+`tools/run-tests.sh` runs the VNC, RDP and SFTP tests against local servers (RDP
+uses FreeRDP's sample server when `FREERDP_DIR` is set; the SFTP part starts a
+private `sshd` on port 2222 with a throwaway key), and
 `tools/check-release.sh build/ZeonVNC-*.dmg` checks a DMG before it is published.
 GitHub Actions runs both on every push.
 

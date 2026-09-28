@@ -5,8 +5,8 @@
 <h1 align="center">ZeonVNC</h1>
 
 <p align="center">
-  A fast, native macOS client for <b>VNC</b>, <b>SSH</b>, <b>Telnet</b> and <b>SFTP</b> —
-  remote desktops, terminals and file transfer in one app.
+  A fast, native macOS client for <b>VNC</b>, <b>RDP</b>, <b>SSH</b>, <b>Telnet</b> and
+  <b>SFTP</b> — remote desktops, terminals and file transfer in one app.
 </p>
 
 <p align="center">
@@ -19,7 +19,8 @@
 
 ZeonVNC is built for macOS with AppKit and Metal. It connects to standard VNC
 servers (UltraVNC, TightVNC, RealVNC with VNC password authentication, WayVNC on the
-Raspberry Pi, x11vnc and others), opens SSH and Telnet terminals, and moves files
+Raspberry Pi, x11vnc and others) and to Windows over RDP, opens SSH and Telnet
+terminals, and moves files
 over SFTP in a two pane window — handy for labs and offices full of test devices.
 
 <p align="center">
@@ -50,6 +51,14 @@ over SFTP in a two pane window — handy for labs and offices full of test devic
 <p align="center">
   <img src="docs/images/vnc-session.png" width="820" alt="VNC session">
 </p>
+
+### Remote desktop (RDP)
+- Windows Remote Desktop (and xrdp, GNOME Remote Desktop) with FreeRDP: network
+  level authentication (NLA), TLS, the modern graphics pipeline
+- The Windows desktop follows the window size, at the Mac's pixel density
+- Keyboard, mouse, wheel, two-way clipboard (text), the same special keys and
+  scaling modes as VNC sessions
+- Certificates are trusted per device, like VNC and SSH keys
 
 ### SSH and Telnet terminals
 - xterm-256color terminal: vim, htop, tmux, nano, colours and mouse work

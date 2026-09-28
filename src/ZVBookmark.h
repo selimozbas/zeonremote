@@ -13,6 +13,7 @@ typedef NS_ENUM(NSInteger, ZVProtocol) {
   ZVProtocolVNC = 0,
   ZVProtocolSSH,
   ZVProtocolTelnet,
+  ZVProtocolRDP,
 };
 
 typedef NS_ENUM(NSInteger, ZVQualityPreset) {
@@ -68,6 +69,7 @@ typedef NS_ENUM(NSInteger, ZVKeyboardMode) {
 @property (nonatomic, copy) NSString* group;
 @property (nonatomic) ZVProtocol protocolType;
 @property (nonatomic) NSInteger telnetPort;      // default 23
+@property (nonatomic) NSInteger rdpPort;         // default 3389
 
 @property (nonatomic) ZVQualityPreset quality;
 @property (nonatomic) ZVEncoding encoding;        // Custom only
@@ -95,7 +97,8 @@ typedef NS_ENUM(NSInteger, ZVKeyboardMode) {
 
 + (instancetype)bookmarkWithHost:(NSString*)host;
 // Parses quick connect input: "host", "vnc://…", "ssh://user@host:port",
-// "ssh user@host", "telnet://host:port", "telnet host port"
+// "ssh user@host", "telnet://host:port", "telnet host port",
+// "rdp://user@host:port", "rdp user@host"
 + (instancetype)bookmarkFromQuickConnect:(NSString*)text;
 - (instancetype)initWithDictionary:(NSDictionary*)dict;
 - (NSDictionary*)dictionaryRepresentation;

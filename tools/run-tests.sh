@@ -4,11 +4,15 @@
 # - VNC: zv-vnctest against zv-testserver with every encoding, VNC password
 #   authentication (right and wrong password), no authentication and
 #   VeNCrypt X509 (TLS)
+# - RDP: zv-rdptest against FreeRDP's sample server (TLS, screen updates,
+#   mouse and keyboard input), when FREERDP_DIR points to a FreeRDP built
+#   with tools/build-freerdp.sh --with-sample-server
 # - SFTP: zv-sftptest and zv-sftpconflict against a private sshd on port
 #   2222 that only accepts a throwaway key from a private ssh-agent, so
 #   ~/.ssh is left alone
 #
-# Usage: tools/run-tests.sh [build directory]   (build with BUILD_TESTSERVER=ON)
+# Usage: [FREERDP_DIR=<prefix>] tools/run-tests.sh [build directory]
+#        (build with BUILD_TESTSERVER=ON)
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -66,6 +70,23 @@ openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=localhost" \
   -keyout "$T/tls.key" -out "$T/tls.crt" 2>/dev/null
 server 5913 -password secret -cert "$T/tls.crt" -key "$T/tls.key"
 run "vnc X509 TLS" "$BUILD/zv-vnctest" -port 5913 -password secret -security X509Vnc
+
+#### RDP ####
+
+# FreeRDP's sample server, built by tools/build-freerdp.sh --with-sample-server
+SFREERDP="${FREERDP_DIR:-}/bin/sfreerdp-server"
+if [ -x "$BUILD/zv-rdptest" ] && [ -x "$SFREERDP" ]; then
+  (cd "$T" && "$SFREERDP" --port=13389 --cert="$T/tls.crt" --key="$T/tls.key" \
+     >"$T/server-rdp.log" 2>&1) &
+  PIDS+=($!)
+  if wait_port 13389; then
+    run "rdp connect, screen, input" env WLOG_LEVEL=ERROR "$BUILD/zv-rdptest" -port 13389
+  else
+    FAILED=$((FAILED + 1))
+  fi
+elif [ -x "$BUILD/zv-rdptest" ]; then
+  echo "--- rdp: skipped (set FREERDP_DIR to a FreeRDP built with --with-sample-server)"
+fi
 
 #### SFTP ####
 

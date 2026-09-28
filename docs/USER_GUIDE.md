@@ -27,11 +27,17 @@ Type an address into Quick Connect and press Return:
 | `ssh://admin@server:2222` | same as above |
 | `telnet 10.0.0.1` | Telnet, port 23 |
 | `telnet://10.0.0.1:2323` | Telnet on port 2323 |
+| `rdp 192.168.1.30` | RDP (Windows Remote Desktop), port 3389 |
+| `rdp admin@server:3390` | RDP as user `admin` on port 3390 |
+| `rdp://admin@server` | RDP as user `admin` |
+
+The menu next to the field picks the protocol for addresses typed without one: with
+**RDP** selected, `192.168.1.30` opens an RDP session.
 
 If the address matches a saved connection, its settings are used.
 
-**Address Book** — press **+** to add a connection. Choose its **Type** (VNC, SSH or
-Telnet); the form only shows what applies to that type. Changes are saved as you
+**Address Book** — press **+** to add a connection. Choose its **Type** (VNC, RDP, SSH
+or Telnet); the form only shows what applies to that type. Changes are saved as you
 type. Double click a connection to open it; right click for Connect, Duplicate and
 Delete.
 
@@ -97,6 +103,27 @@ All keys go to the remote computer, including ⌘ shortcuts. Local commands use
   sends the characters you type on your Mac (best when the layouts differ).
 - Left Option is Alt, right Option is AltGr.
 - Keys held when the window loses focus are released automatically.
+
+## Remote desktop (RDP)
+
+RDP connects to Windows (Remote Desktop has to be turned on in Windows: *Settings →
+System → Remote Desktop*; Windows Home editions have no Remote Desktop server) and to
+Linux machines running xrdp or GNOME Remote Desktop.
+
+- Log in with the Windows user name and password. Use `DOMAIN\user` or
+  `user@domain` for domain accounts. The password can be saved in the Keychain, as
+  for VNC.
+- The first time, you are asked whether to trust the computer's certificate (Windows
+  uses a self-signed one). Like VNC and SSH keys, the certificate belongs to the
+  device; if it changes you are asked again.
+- The Windows desktop is created in the size of the window and follows it when you
+  resize the window or go full screen (*Resize remote screen to window*). With
+  *Pixel perfect* scaling, the default for RDP, it has the Mac's pixels and Windows
+  scales its text to match, so everything stays sharp.
+- Keyboard, special keys (Ctrl-Alt-Del, Windows key, ...), the ⌘ key setting and the
+  two keyboard layout modes work as in VNC sessions. Text is copied in both
+  directions when *Share clipboard* is on.
+- Not supported yet: sound, drives, printers, smart cards, RD Gateway.
 
 ## SSH and Telnet terminals
 

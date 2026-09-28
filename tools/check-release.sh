@@ -5,7 +5,7 @@
 # - LSMinimumSystemVersion is set, and no executable or library in the
 #   bundle needs a newer macOS than that (the 0.3 binary needed macOS 27)
 # - everything is built for arm64
-# - the macOS 26 app icon is included
+# - the macOS 26 app icon and RDP support (FreeRDP) are included
 # - the code signature is valid
 #
 # Usage: tools/check-release.sh path/to/ZeonVNC-x.y.z.dmg
@@ -48,6 +48,11 @@ while IFS= read -r f; do
     error "$name needs macOS $minos, but the app claims macOS $MIN"
   fi
 done < <(find "$APP/Contents" -type f \( -perm -u+x -o -name "*.dylib" \))
+
+# RDP support (FreeRDP) is part of release builds
+if ! ls "$APP/Contents/Frameworks"/libfreerdp-client3*.dylib >/dev/null 2>&1; then
+  error "no FreeRDP in the app (build with -DFREERDP_DIR=...)"
+fi
 
 # The macOS 26 icon needs the asset catalog built from resources/AppIcon.icon
 if [ "$(plist CFBundleIconName)" != "AppIcon" ] || [ ! -f "$APP/Contents/Resources/Assets.car" ]; then

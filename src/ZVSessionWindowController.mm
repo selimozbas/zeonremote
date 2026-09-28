@@ -220,7 +220,7 @@ static const int kMaxReconnectAttempts = 20;
       _session = [[ZVSession alloc] initWithBookmark:bookmark connectedSocket:fd];
       _bookmark.autoReconnect = NO;
     } else {
-      _session = [[ZVSession alloc] initWithBookmark:bookmark];
+      _session = [ZVSession sessionWithBookmark:bookmark];
     }
     _session.delegate = self;
     _remoteView.session = _session;

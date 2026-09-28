@@ -27,6 +27,7 @@ It includes and links the components below. Their license texts are in
 | p11-kit | BSD-3-Clause — [licenses/p11-kit.txt](licenses/p11-kit.txt) |
 | libssh2 | BSD-3-Clause — [licenses/libssh2.txt](licenses/libssh2.txt) |
 | OpenSSL 3 | Apache-2.0 — [licenses/OpenSSL-Apache-2.0.txt](licenses/OpenSSL-Apache-2.0.txt) |
+| FreeRDP 3.32.1 and WinPR (RDP connections; built from source by `tools/build-freerdp.sh`) | Apache-2.0 — [licenses/FreeRDP-Apache-2.0.txt](licenses/FreeRDP-Apache-2.0.txt) |
 | Sparkle 2.9.6 (automatic updates; official release build) | MIT and the external licenses listed in it — [licenses/Sparkle.txt](licenses/Sparkle.txt) |
 | libjpeg-turbo | IJG, BSD-3-Clause and zlib licenses — [licenses/libjpeg-turbo.md](licenses/libjpeg-turbo.md) |
 | pixman | MIT — [licenses/pixman.txt](licenses/pixman.txt) |

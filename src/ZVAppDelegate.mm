@@ -204,7 +204,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
 
 - (void)openSessionForBookmark:(ZVBookmark*)bookmark
 {
-  if (bookmark.protocolType != ZVProtocolVNC) {
+  if (bookmark.protocolType == ZVProtocolSSH || bookmark.protocolType == ZVProtocolTelnet) {
     [self openTerminalForBookmark:bookmark password:nil];
     return;
   }
@@ -300,7 +300,8 @@ static const NSEventModifierFlags kLocalShortcutMask =
   }
 
   NSString* scheme = url.scheme.lowercaseString;
-  if (([scheme isEqualToString:@"ssh"] || [scheme isEqualToString:@"telnet"]) && url.host.length) {
+  if (([scheme isEqualToString:@"ssh"] || [scheme isEqualToString:@"telnet"] ||
+       [scheme isEqualToString:@"rdp"]) && url.host.length) {
     ZVBookmark* quick = [ZVBookmark bookmarkFromQuickConnect:url.absoluteString];
     [self openSessionForBookmark:[[ZVBookmarkStore sharedStore] bookmarkMatching:quick] ?: quick];
     return;

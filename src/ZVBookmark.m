@@ -46,6 +46,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     _sshPort = 22;
     _protocolType = ZVProtocolVNC;
     _telnetPort = 23;
+    _rdpPort = 3389;
   }
   return self;
 }
@@ -67,17 +68,30 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
   NSString* host = text;
   int port = 0;
 
-  if ([lower hasPrefix:@"ssh://"] || [lower hasPrefix:@"telnet://"]) {
+  if ([lower hasPrefix:@"vnc://"]) {
+    // vnc://[user@]host[:port]  (the port is a TCP port, not a display)
     NSURL* url = [NSURL URLWithString:text];
-    proto = [lower hasPrefix:@"ssh"] ? ZVProtocolSSH : ZVProtocolTelnet;
+    NSString* h = url.host ?: @"";
+    if ([h containsString:@":"])
+      h = [NSString stringWithFormat:@"[%@]", h];
+    ZVBookmark* b = [self bookmarkWithHost:url.port ? [NSString stringWithFormat:@"%@::%@", h, url.port] : h];
+    if (url.user.length)
+      b.username = url.user;
+    return b;
+  }
+  if ([lower hasPrefix:@"ssh://"] || [lower hasPrefix:@"telnet://"] || [lower hasPrefix:@"rdp://"]) {
+    NSURL* url = [NSURL URLWithString:text];
+    proto = [lower hasPrefix:@"ssh"] ? ZVProtocolSSH
+          : [lower hasPrefix:@"rdp"] ? ZVProtocolRDP : ZVProtocolTelnet;
     user = url.user;
     host = url.host ?: @"";
     port = url.port.intValue;
-  } else if ([lower hasPrefix:@"ssh "] || [lower hasPrefix:@"telnet "]) {
-    // Shell style: "ssh user@host -p 2222", "telnet host 2323"
+  } else if ([lower hasPrefix:@"ssh "] || [lower hasPrefix:@"telnet "] || [lower hasPrefix:@"rdp "]) {
+    // Shell style: "ssh user@host -p 2222", "telnet host 2323", "rdp user@host:3390"
     NSArray* parts = [[text componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]
                        filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"length > 0"]];
-    proto = [lower hasPrefix:@"ssh"] ? ZVProtocolSSH : ZVProtocolTelnet;
+    proto = [lower hasPrefix:@"ssh"] ? ZVProtocolSSH
+          : [lower hasPrefix:@"rdp"] ? ZVProtocolRDP : ZVProtocolTelnet;
     host = @"";
     for (NSUInteger i = 1; i < parts.count; i++) {
       NSString* p = parts[i];
@@ -90,10 +104,17 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
       else if (proto == ZVProtocolTelnet && port == 0)
         port = p.intValue;
     }
-    NSRange at = [host rangeOfString:@"@"];
+    NSRange at = [host rangeOfString:@"@" options:NSBackwardsSearch];
     if (at.location != NSNotFound) {
       user = [host substringToIndex:at.location];
       host = [host substringFromIndex:at.location + 1];
+    }
+    // "host:port" (not an IPv6 address)
+    NSRange colon = [host rangeOfString:@":" options:NSBackwardsSearch];
+    if (proto == ZVProtocolRDP && port == 0 && colon.location != NSNotFound &&
+        [host rangeOfString:@":"].location == colon.location) {
+      port = [host substringFromIndex:colon.location + 1].intValue;
+      host = [host substringToIndex:colon.location];
     }
   }
 
@@ -109,6 +130,12 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
   b.username = user ?: @"";
   if (proto == ZVProtocolSSH)
     b.sshPort = port > 0 ? port : 22;
+  else if (proto == ZVProtocolRDP) {
+    b.rdpPort = port > 0 ? port : 3389;
+    // Windows adapts its desktop to the window, at the Mac's pixel density
+    b.scaleMode = ZVScaleNativePixels;
+    b.remoteResize = YES;
+  }
   else
     b.telnetPort = port > 0 ? port : 23;
   return b;
@@ -127,7 +154,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     BOOLV(shared); BOOLV(viewOnly); BOOLV(remoteResize); BOOLV(fullScreen);
     BOOLV(autoReconnect); BOOLV(shareClipboard); BOOLV(showRemoteCursor);
     BOOLV(alwaysAskPassword);
-    STR(sshUsername); NUM(sshPort); NUM(protocolType); NUM(telnetPort);
+    STR(sshUsername); NUM(sshPort); NUM(protocolType); NUM(telnetPort); NUM(rdpPort);
 #undef STR
 #undef NUM
 #undef BOOLV
@@ -153,6 +180,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     @"alwaysAskPassword": @(_alwaysAskPassword),
     @"sshUsername": _sshUsername, @"sshPort": @(_sshPort),
     @"protocolType": @(_protocolType), @"telnetPort": @(_telnetPort),
+    @"rdpPort": @(_rdpPort),
   } mutableCopy];
   if (_lastConnected)
     d[@"lastConnected"] = _lastConnected;
@@ -177,6 +205,9 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
   case ZVProtocolTelnet:
     return [NSString stringWithFormat:@"telnet://%@%@", _host,
             (_telnetPort && _telnetPort != 23) ? [NSString stringWithFormat:@":%ld", (long)_telnetPort] : @""];
+  case ZVProtocolRDP:
+    return [NSString stringWithFormat:@"rdp://%@%@%@", _username.length ? [_username stringByAppendingString:@"@"] : @"",
+            _host, (_rdpPort && _rdpPort != 3389) ? [NSString stringWithFormat:@":%ld", (long)_rdpPort] : @""];
   }
   return _host;
 }
@@ -195,6 +226,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     switch (_protocolType) {
     case ZVProtocolSSH:    return [NSString stringWithFormat:@"ssh-host:%@:%ld", _host, (long)_sshPort];
     case ZVProtocolTelnet: return [NSString stringWithFormat:@"telnet-host:%@:%ld", _host, (long)_telnetPort];
+    case ZVProtocolRDP:    return [NSString stringWithFormat:@"rdp-host:%@:%ld", _host, (long)_rdpPort];
     default:               return [@"host:" stringByAppendingString:_host];
     }
   }

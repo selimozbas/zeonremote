@@ -48,17 +48,30 @@ jobs:
           path: appicon
 
       - name: Install dependencies
-        run: brew install cmake jpeg-turbo pixman gnutls nettle libssh2 create-dmg
+        run: brew install cmake ninja jpeg-turbo pixman gnutls nettle libssh2 openssl@3 create-dmg
+
+      # FreeRDP for RDP, only the libraries (and the sample server for the
+      # tests); rebuilt when tools/build-freerdp.sh changes
+      - uses: actions/cache@v4
+        id: freerdp
+        with:
+          path: freerdp
+          key: freerdp-macos15-${{ hashFiles('tools/build-freerdp.sh') }}
+
+      - name: Build FreeRDP
+        if: steps.freerdp.outputs.cache-hit != 'true'
+        run: MACOSX_DEPLOYMENT_TARGET=15.0 tools/build-freerdp.sh freerdp --with-sample-server
 
       - name: Build
         run: |
           # The Homebrew libraries of the macos-15 runner need macOS 15
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=ON -DCODESIGN_IDENTITY=- \
-            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DZV_APPICON_DIR="$PWD/appicon"
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DZV_APPICON_DIR="$PWD/appicon" \
+            -DFREERDP_DIR="$PWD/freerdp"
           cmake --build build -j
 
       - name: Test
-        run: tools/run-tests.sh build
+        run: FREERDP_DIR="$PWD/freerdp" tools/run-tests.sh build
 
       - name: Make DMG
         run: tools/make-dmg.sh

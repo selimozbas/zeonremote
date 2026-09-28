@@ -73,6 +73,8 @@ typedef struct {
 @interface ZVSession : NSObject <ZVFileTransferContext>
 
 - (instancetype)initWithBookmark:(ZVBookmark*)bookmark;
+// A VNC or RDP session, depending on the bookmark's protocol
++ (ZVSession*)sessionWithBookmark:(ZVBookmark*)bookmark;
 // Session for an incoming (reverse) connection; takes ownership of fd
 - (instancetype)initWithBookmark:(ZVBookmark*)bookmark connectedSocket:(int)fd;
 
