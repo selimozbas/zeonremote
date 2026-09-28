@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.20)
 # version of the build machine and the app refuses to start on older ones
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "Minimum macOS version")
 
-project(ZeonRemote VERSION 0.3.3 LANGUAGES C CXX OBJC OBJCXX)
+project(ZeonRemote VERSION 0.3.4 LANGUAGES C CXX OBJC OBJCXX)
 
 if(NOT APPLE)
   message(FATAL_ERROR "ZeonVNC only supports macOS")

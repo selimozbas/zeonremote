@@ -103,7 +103,7 @@ and settings carry over; after installing Zeon Remote you can delete `ZeonVNC.ap
 
 ## Install
 
-Download `ZeonRemote-0.3.3.dmg` from the
+Download `ZeonRemote-0.3.4.dmg` from the
 [releases page](https://github.com/selimozbas/zeonremote/releases/latest), open it and
 drag Zeon Remote to Applications.
 

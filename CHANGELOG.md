@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.4 — 2026-09-28
 
 - **ZeonVNC is now Zeon Remote**: VNC, RDP, SSH, Telnet, SFTP and FTP in one app.
   Saved connections, Keychain passwords and settings carry over. The download is
