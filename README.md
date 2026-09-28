@@ -91,8 +91,9 @@ and settings carry over; after installing Zeon Remote you can delete `ZeonVNC.ap
 ### Connections and credentials
 - Address book with search, groups, recent connections, JSON import / export and
   import of `.vnc` connection files; `vnc://` URLs
-- Quick connect understands `host`, `host::port`, `ssh user@host -p 2222`,
-  `ssh://user@host`, `telnet host 23`
+- Quick Connect with a protocol menu (VNC, RDP, SSH, Telnet, SFTP, FTP) next to the
+  address; it also understands `host::port`, `rdp user@host`, `ssh user@host -p 2222`,
+  `sftp://user@host`, `ftps://user@nas`, `telnet host 23` and `vnc://host:port`
 - Passwords are stored in the macOS Keychain — or not at all: with saving turned off
   in Settings you are asked every time
 - **Per-device trust for DHCP networks**: passwords, TLS certificates and SSH host
