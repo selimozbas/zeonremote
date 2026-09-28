@@ -166,8 +166,8 @@ if [ -n "$SSH_CONNECTION" ]; then
 fi
 PROFILE
 )"
-echo "$PROFILE_TEXT" >> ~/.zprofile
-echo "$PROFILE_TEXT" >> ~/.bash_profile
+printf "\n%s\n" "$PROFILE_TEXT" >> ~/.zprofile
+printf "\n%s\n" "$PROFILE_TEXT" >> ~/.bash_profile
 
 run_app "ssh://$USER@127.0.0.1:2222"
 capture terminal "" 6
