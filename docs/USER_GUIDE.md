@@ -30,6 +30,9 @@ Type an address into Quick Connect and press Return:
 | `rdp 192.168.1.30` | RDP (Windows Remote Desktop), port 3389 |
 | `rdp admin@server:3390` | RDP as user `admin` on port 3390 |
 | `rdp://admin@server` | RDP as user `admin` |
+| `sftp pi@192.168.1.20` | File transfer over SSH (SFTP) |
+| `ftp nas.local` | File transfer over FTP (not encrypted) |
+| `ftps://admin@nas.local` | FTPS (FTP with TLS); port 990 means implicit FTPS |
 
 The menu next to the field picks the protocol for addresses typed without one: with
 **RDP** selected, `192.168.1.30` opens an RDP session.
@@ -142,8 +145,16 @@ or Telnet), or from a VNC session (**SSH Terminal** button, ⌃⌥⌘E).
 ## File transfer
 
 The file transfer window shows **This Mac** on the left and the **remote device** on
-the right. It uses SFTP, so the device needs SSH (on a Raspberry Pi:
-`sudo raspi-config` → Interface Options → SSH, or `sudo systemctl enable --now ssh`).
+the right. Open it from a VNC or RDP session or an SSH terminal (it then uses SFTP to
+the same device, which needs SSH — on a Raspberry Pi: `sudo raspi-config` → Interface
+Options → SSH, or `sudo systemctl enable --now ssh`), or save an **SFTP** or
+**FTP / FTPS** connection, which opens the window directly.
+
+- **FTP / FTPS**: for NAS boxes, web hosting, cameras and other devices without SSH.
+  Choose the encryption in the connection: *FTPS (explicit)* is what most servers
+  offer on port 21, *implicit* uses port 990. Plain FTP sends the password
+  unencrypted — use it only on networks you trust. The FTPS certificate is trusted
+  per device, like SSH keys. Use `anonymous` as user name for public servers.
 
 - Drag files and folders between the panes, or select them and use **Upload →** /
   **← Download**. Double clicking a file copies it to the other side.

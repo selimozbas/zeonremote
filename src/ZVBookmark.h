@@ -14,6 +14,8 @@ typedef NS_ENUM(NSInteger, ZVProtocol) {
   ZVProtocolSSH,
   ZVProtocolTelnet,
   ZVProtocolRDP,
+  ZVProtocolSFTP,         // file transfer only (port: sshPort)
+  ZVProtocolFTP,          // FTP / FTPS file transfer
 };
 
 typedef NS_ENUM(NSInteger, ZVQualityPreset) {
@@ -70,6 +72,8 @@ typedef NS_ENUM(NSInteger, ZVKeyboardMode) {
 @property (nonatomic) ZVProtocol protocolType;
 @property (nonatomic) NSInteger telnetPort;      // default 23
 @property (nonatomic) NSInteger rdpPort;         // default 3389
+@property (nonatomic) NSInteger ftpPort;         // default 21 (990 for implicit FTPS)
+@property (nonatomic) NSInteger ftpSecurity;     // ZVFTPSecurity: 0 none, 1 FTPS, 2 implicit FTPS
 
 @property (nonatomic) ZVQualityPreset quality;
 @property (nonatomic) ZVEncoding encoding;        // Custom only
@@ -98,7 +102,9 @@ typedef NS_ENUM(NSInteger, ZVKeyboardMode) {
 + (instancetype)bookmarkWithHost:(NSString*)host;
 // Parses quick connect input: "host", "vnc://…", "ssh://user@host:port",
 // "ssh user@host", "telnet://host:port", "telnet host port",
-// "rdp://user@host:port", "rdp user@host"
+// "rdp://user@host:port", "rdp user@host", "sftp://user@host", "sftp user@host",
+// "ftp://user@host:port", "ftps://user@host" (FTPS; port 990 = implicit),
+// "ftp user@host"
 + (instancetype)bookmarkFromQuickConnect:(NSString*)text;
 - (instancetype)initWithDictionary:(NSDictionary*)dict;
 - (NSDictionary*)dictionaryRepresentation;

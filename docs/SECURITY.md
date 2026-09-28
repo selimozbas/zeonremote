@@ -61,6 +61,10 @@ host keys already in `~/.ssh/known_hosts` are accepted without asking.
   refuses unencrypted methods.
 - SSH / SFTP: always encrypted.
 - Telnet: not encrypted at all; Zeon Remote shows a warning when connecting.
+- RDP: TLS or NLA (CredSSP); the server's certificate is trusted per device.
+- FTP: not encrypted (the login dialog says so). FTPS: TLS on the control and data
+  connections; the certificate is checked before the password is sent and trusted
+  per device.
 
 ## Reporting a vulnerability
 

@@ -47,6 +47,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     _protocolType = ZVProtocolVNC;
     _telnetPort = 23;
     _rdpPort = 3389;
+    _ftpPort = 21;
   }
   return self;
 }
@@ -79,19 +80,26 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
       b.username = url.user;
     return b;
   }
-  if ([lower hasPrefix:@"ssh://"] || [lower hasPrefix:@"telnet://"] || [lower hasPrefix:@"rdp://"]) {
+  BOOL ftps = [lower hasPrefix:@"ftps://"] || [lower hasPrefix:@"ftps "];
+  if ([lower hasPrefix:@"ssh://"] || [lower hasPrefix:@"telnet://"] || [lower hasPrefix:@"rdp://"] ||
+      [lower hasPrefix:@"sftp://"] || [lower hasPrefix:@"ftp://"] || [lower hasPrefix:@"ftps://"]) {
     NSURL* url = [NSURL URLWithString:text];
     proto = [lower hasPrefix:@"ssh"] ? ZVProtocolSSH
-          : [lower hasPrefix:@"rdp"] ? ZVProtocolRDP : ZVProtocolTelnet;
+          : [lower hasPrefix:@"rdp"] ? ZVProtocolRDP
+          : [lower hasPrefix:@"sftp"] ? ZVProtocolSFTP
+          : [lower hasPrefix:@"ftp"] ? ZVProtocolFTP : ZVProtocolTelnet;
     user = url.user;
     host = url.host ?: @"";
     port = url.port.intValue;
-  } else if ([lower hasPrefix:@"ssh "] || [lower hasPrefix:@"telnet "] || [lower hasPrefix:@"rdp "]) {
+  } else if ([lower hasPrefix:@"ssh "] || [lower hasPrefix:@"telnet "] || [lower hasPrefix:@"rdp "] ||
+             [lower hasPrefix:@"sftp "] || [lower hasPrefix:@"ftp "] || ftps) {
     // Shell style: "ssh user@host -p 2222", "telnet host 2323", "rdp user@host:3390"
     NSArray* parts = [[text componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]
                        filteredArrayUsingPredicate:[NSPredicate predicateWithFormat:@"length > 0"]];
     proto = [lower hasPrefix:@"ssh"] ? ZVProtocolSSH
-          : [lower hasPrefix:@"rdp"] ? ZVProtocolRDP : ZVProtocolTelnet;
+          : [lower hasPrefix:@"rdp"] ? ZVProtocolRDP
+          : [lower hasPrefix:@"sftp"] ? ZVProtocolSFTP
+          : [lower hasPrefix:@"ftp"] ? ZVProtocolFTP : ZVProtocolTelnet;
     host = @"";
     for (NSUInteger i = 1; i < parts.count; i++) {
       NSString* p = parts[i];
@@ -111,7 +119,8 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     }
     // "host:port" (not an IPv6 address)
     NSRange colon = [host rangeOfString:@":" options:NSBackwardsSearch];
-    if (proto == ZVProtocolRDP && port == 0 && colon.location != NSNotFound &&
+    if ((proto == ZVProtocolRDP || proto == ZVProtocolFTP || proto == ZVProtocolSFTP) &&
+        port == 0 && colon.location != NSNotFound &&
         [host rangeOfString:@":"].location == colon.location) {
       port = [host substringFromIndex:colon.location + 1].intValue;
       host = [host substringToIndex:colon.location];
@@ -128,8 +137,12 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
   ZVBookmark* b = [self bookmarkWithHost:host];
   b.protocolType = proto;
   b.username = user ?: @"";
-  if (proto == ZVProtocolSSH)
+  if (proto == ZVProtocolSSH || proto == ZVProtocolSFTP)
     b.sshPort = port > 0 ? port : 22;
+  else if (proto == ZVProtocolFTP) {
+    b.ftpSecurity = ftps ? (port == 990 ? 2 : 1) : 0;
+    b.ftpPort = port > 0 ? port : (b.ftpSecurity == 2 ? 990 : 21);
+  }
   else if (proto == ZVProtocolRDP) {
     b.rdpPort = port > 0 ? port : 3389;
     // Windows adapts its desktop to the window, at the Mac's pixel density
@@ -154,7 +167,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     BOOLV(shared); BOOLV(viewOnly); BOOLV(remoteResize); BOOLV(fullScreen);
     BOOLV(autoReconnect); BOOLV(shareClipboard); BOOLV(showRemoteCursor);
     BOOLV(alwaysAskPassword);
-    STR(sshUsername); NUM(sshPort); NUM(protocolType); NUM(telnetPort); NUM(rdpPort);
+    STR(sshUsername); NUM(sshPort); NUM(protocolType); NUM(telnetPort); NUM(rdpPort); NUM(ftpPort); NUM(ftpSecurity);
 #undef STR
 #undef NUM
 #undef BOOLV
@@ -180,7 +193,7 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     @"alwaysAskPassword": @(_alwaysAskPassword),
     @"sshUsername": _sshUsername, @"sshPort": @(_sshPort),
     @"protocolType": @(_protocolType), @"telnetPort": @(_telnetPort),
-    @"rdpPort": @(_rdpPort),
+    @"rdpPort": @(_rdpPort), @"ftpPort": @(_ftpPort), @"ftpSecurity": @(_ftpSecurity),
   } mutableCopy];
   if (_lastConnected)
     d[@"lastConnected"] = _lastConnected;
@@ -205,6 +218,18 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
   case ZVProtocolTelnet:
     return [NSString stringWithFormat:@"telnet://%@%@", _host,
             (_telnetPort && _telnetPort != 23) ? [NSString stringWithFormat:@":%ld", (long)_telnetPort] : @""];
+  case ZVProtocolSFTP:
+    return [NSString stringWithFormat:@"sftp://%@%@%@", _username.length ? [_username stringByAppendingString:@"@"] : @"",
+            _host, (_sshPort && _sshPort != 22) ? [NSString stringWithFormat:@":%ld", (long)_sshPort] : @""];
+  case ZVProtocolFTP: {
+    NSInteger def = _ftpSecurity == 2 ? 990 : 21;
+    NSInteger port = _ftpPort ?: def;
+    // Implicit FTPS is written with its port so it reads back the same
+    BOOL showPort = port != def || _ftpSecurity == 2;
+    return [NSString stringWithFormat:@"%@://%@%@%@", _ftpSecurity ? @"ftps" : @"ftp",
+            _username.length ? [_username stringByAppendingString:@"@"] : @"", _host,
+            showPort ? [NSString stringWithFormat:@":%ld", (long)port] : @""];
+  }
   case ZVProtocolRDP:
     return [NSString stringWithFormat:@"rdp://%@%@%@", _username.length ? [_username stringByAppendingString:@"@"] : @"",
             _host, (_rdpPort && _rdpPort != 3389) ? [NSString stringWithFormat:@":%ld", (long)_rdpPort] : @""];
@@ -227,6 +252,8 @@ NSNotificationName const ZVBookmarksDidChangeNotification = @"ZVBookmarksDidChan
     case ZVProtocolSSH:    return [NSString stringWithFormat:@"ssh-host:%@:%ld", _host, (long)_sshPort];
     case ZVProtocolTelnet: return [NSString stringWithFormat:@"telnet-host:%@:%ld", _host, (long)_telnetPort];
     case ZVProtocolRDP:    return [NSString stringWithFormat:@"rdp-host:%@:%ld", _host, (long)_rdpPort];
+    case ZVProtocolSFTP:   return [NSString stringWithFormat:@"ssh-host:%@:%ld", _host, (long)_sshPort];
+    case ZVProtocolFTP:    return [NSString stringWithFormat:@"ftp-host:%@:%ld", _host, (long)_ftpPort];
     default:               return [@"host:" stringByAppendingString:_host];
     }
   }

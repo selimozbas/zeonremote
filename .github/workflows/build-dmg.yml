@@ -71,7 +71,10 @@ jobs:
           cmake --build build -j
 
       - name: Test
-        run: FREERDP_DIR="$PWD/freerdp" tools/run-tests.sh build
+        run: |
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install --quiet pyftpdlib pyopenssl
+          PYTHON="$RUNNER_TEMP/venv/bin/python" FREERDP_DIR="$PWD/freerdp" tools/run-tests.sh build
 
       - name: Make DMG
         run: tools/make-dmg.sh

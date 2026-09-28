@@ -133,12 +133,14 @@ Built with `BUILD_TESTSERVER=ON` into `build/`:
 | `zv-h264test in.h264 w h out.ppm` | Decodes an H.264 stream with the VideoToolbox decoder |
 | `zv-sftptest host port user localdir remotedir downloaddir` | SFTP round trip |
 | `zv-sftpconflict …` | Same with conflict answers (Keep Both / Skip / Stop) |
+| `zv-ftptest host port user password plain\|explicit\|implicit file` | FTP / FTPS round trip with the app's FTP code |
 | `zv-rdptest` | Headless RDP client (the app's RDP core): `-port N`, `-user U`, `-password P`, `-size WxH` |
 | `zv-vnctest` | Headless VNC client used by the tests: `-port N`, `-password PW`, `-encoding raw\|hextile\|tight\|zrle`, `-security TYPE`, `-expect-auth-failure` |
 
-`tools/run-tests.sh` runs the VNC, RDP and SFTP tests against local servers (RDP
-uses FreeRDP's sample server when `FREERDP_DIR` is set; the SFTP part starts a
-private `sshd` on port 2222 with a throwaway key), and
+`tools/run-tests.sh` runs the VNC, RDP, FTP and SFTP tests against local servers
+(RDP uses FreeRDP's sample server when `FREERDP_DIR` is set; FTP needs Python with
+`pyftpdlib` and `pyOpenSSL`, given as `PYTHON=...`; the SFTP part starts a private
+`sshd` on port 2222 with a throwaway key), and
 `tools/check-release.sh build/ZeonRemote-*.dmg` checks a DMG before it is published.
 GitHub Actions runs both on every push.
 

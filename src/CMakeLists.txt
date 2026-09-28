@@ -6,6 +6,8 @@ set(ZV_SOURCES
   ZVConnectionsWindowController.mm
   ZVFilePane.mm
   ZVFileTransferWindowController.mm
+  ZVFTPClient.mm
+  ftp/ZVFtpConnection.cpp
   ZVFramebuffer.mm
   ZVKeychain.m
   ZVListener.m
@@ -123,6 +125,7 @@ target_include_directories(ZeonRemote PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${ZV_C
 # SSH / SFTP for file transfer
 target_include_directories(ZeonRemote SYSTEM PRIVATE ${LIBSSH2_INCLUDE_DIR})
 target_link_libraries(ZeonRemote ${LIBSSH2_LIBRARY})
+target_link_libraries(ZeonRemote OpenSSL::SSL OpenSSL::Crypto)
 
 target_link_libraries(ZeonRemote rfb network rdr core
   "-framework Cocoa"

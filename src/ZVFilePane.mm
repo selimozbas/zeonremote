@@ -799,7 +799,7 @@ static NSUserInterfaceItemIdentifier const kColDate = @"date";
 
 @implementation ZVRemoteFilePane
 
-- (instancetype)initWithClient:(ZVSFTPClient*)client
+- (instancetype)initWithClient:(id<ZVFileClient>)client
 {
   self = [super init];
   if (self) {

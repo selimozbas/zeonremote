@@ -5,8 +5,8 @@
 <h1 align="center">Zeon Remote</h1>
 
 <p align="center">
-  A fast, native macOS client for <b>VNC</b>, <b>RDP</b>, <b>SSH</b>, <b>Telnet</b> and
-  <b>SFTP</b> — remote desktops, terminals and file transfer in one app.
+  A fast, native macOS client for <b>VNC</b>, <b>RDP</b>, <b>SSH</b>, <b>Telnet</b>,
+  <b>SFTP</b> and <b>FTP / FTPS</b> — remote desktops, terminals and file transfer in one app.
 </p>
 
 <p align="center">
@@ -74,7 +74,10 @@ and settings carry over; after installing Zeon Remote you can delete `ZeonVNC.ap
   <img src="docs/images/terminal.png" width="700" alt="SSH terminal">
 </p>
 
-### File transfer (SFTP)
+### File transfer (SFTP, FTP, FTPS)
+- SFTP to anything with SSH, FTP and FTPS (TLS, explicit and implicit) for NAS boxes,
+  web hosting, cameras and other devices without SSH — as connections of their own or
+  from a VNC / RDP session or SSH terminal
 - Two panes: this Mac on the left, the remote device on the right; drag and drop in
   both directions, Upload / Download buttons, double click to copy across
 - Asks what to do when a file already exists — **Replace, Keep Both, Skip or Stop** —

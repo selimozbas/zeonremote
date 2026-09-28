@@ -7,6 +7,8 @@
 # - RDP: zv-rdptest against FreeRDP's sample server (TLS, screen updates,
 #   mouse and keyboard input), when FREERDP_DIR points to a FreeRDP built
 #   with tools/build-freerdp.sh --with-sample-server
+# - FTP: zv-ftptest against pyftpdlib (plain FTP, FTPS, and a server
+#   without MLSD so LIST output is parsed), when Python has pyftpdlib
 # - SFTP: zv-sftptest and zv-sftpconflict against a private sshd on port
 #   2222 that only accepts a throwaway key from a private ssh-agent, so
 #   ~/.ssh is left alone
@@ -86,6 +88,33 @@ if [ -x "$BUILD/zv-rdptest" ] && [ -x "$SFREERDP" ]; then
   fi
 elif [ -x "$BUILD/zv-rdptest" ]; then
   echo "--- rdp: skipped (set FREERDP_DIR to a FreeRDP built with --with-sample-server)"
+fi
+
+#### FTP ####
+
+# pyftpdlib (and pyOpenSSL for FTPS), e.g. in a venv given as PYTHON
+PY="${PYTHON:-python3}"
+if [ -x "$BUILD/zv-ftptest" ] && "$PY" -c "import pyftpdlib, OpenSSL" 2>/dev/null; then
+  head -c 3000000 /dev/urandom > "$T/ftp-data.bin"
+  ftp_test() {   # name, client mode, server options...
+    local name="$1" mode="$2"; shift 2
+    local root="$T/ftp-$name"
+    mkdir -p "$root"
+    "$PY" "$ROOT/tools/ftp-test-server.py" 2121 "$root" tester secret "$@" >"$T/server-ftp-$name.log" 2>&1 &
+    local pid=$!
+    if wait_port 2121; then
+      run "ftp $name" "$BUILD/zv-ftptest" 127.0.0.1 2121 tester secret "$mode" "$T/ftp-data.bin"
+    else
+      FAILED=$((FAILED + 1))
+    fi
+    kill "$pid" 2>/dev/null
+    wait "$pid" 2>/dev/null
+  }
+  ftp_test plain plain
+  ftp_test ftps explicit --tls "$T/tls.crt" "$T/tls.key"
+  ftp_test list-only plain --no-mlsd
+else
+  echo "--- ftp: skipped (needs zv-ftptest and Python with pyftpdlib and pyOpenSSL)"
 fi
 
 #### SFTP ####

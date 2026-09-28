@@ -65,8 +65,8 @@ extern NSPasteboardType const ZVRemotePathPasteboardType;
 
 // The remote device over SFTP
 @interface ZVRemoteFilePane : ZVFilePane
-- (instancetype)initWithClient:(ZVSFTPClient*)client;
-@property (nonatomic, readonly) ZVSFTPClient* client;
+- (instancetype)initWithClient:(id<ZVFileClient>)client;
+@property (nonatomic, readonly) id<ZVFileClient> client;
 @end
 
 NS_ASSUME_NONNULL_END

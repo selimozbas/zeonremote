@@ -18,6 +18,24 @@
 #import "ZVSession.h"
 #import "ZVSessionWindowController.h"
 #import "ZVTerminalWindowController.h"
+#import "ZVFileTransferWindowController.h"
+
+// Login details for a file transfer window of its own (SFTP / FTP connection)
+@interface ZVBookmarkFileContext : NSObject <ZVFileTransferContext>
+@property (nonatomic, strong) ZVBookmark* bookmark;
+@end
+
+@implementation ZVBookmarkFileContext
+- (NSString*)transferUsername { return _bookmark.username; }
+- (NSString*)transferPassword
+{
+  if (_bookmark.alwaysAskPassword ||
+      ![[NSUserDefaults standardUserDefaults] boolForKey:ZVPrefRememberPasswords])
+    return nil;
+  return [_bookmark storedPassword];
+}
+- (NSString*)transferScope { return [_bookmark credentialScope]; }
+@end
 
 #ifdef ZV_SPARKLE
 #import <Sparkle/Sparkle.h>
@@ -70,6 +88,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
   ZVPreferencesWindowController* _prefs;
   NSMutableArray<ZVSessionWindowController*>* _sessions;
   NSMutableArray<ZVTerminalWindowController*>* _terminals;
+  NSMutableArray<ZVFileTransferWindowController*>* _fileWindows;
   ZVListener* _listener;
   NSMutableArray<NSURL*>* _pendingOpen;
 #ifdef ZV_SPARKLE
@@ -84,6 +103,7 @@ static const NSEventModifierFlags kLocalShortcutMask =
   if (self) {
     _sessions = [NSMutableArray array];
     _terminals = [NSMutableArray array];
+    _fileWindows = [NSMutableArray array];
     _pendingOpen = [NSMutableArray array];
   }
   return self;
@@ -208,6 +228,10 @@ static const NSEventModifierFlags kLocalShortcutMask =
     [self openTerminalForBookmark:bookmark password:nil];
     return;
   }
+  if (bookmark.protocolType == ZVProtocolSFTP || bookmark.protocolType == ZVProtocolFTP) {
+    [self openFilesForBookmark:bookmark];
+    return;
+  }
 
   // Bring an existing window for the same connection to the front
   for (ZVSessionWindowController* s in _sessions) {
@@ -221,6 +245,44 @@ static const NSEventModifierFlags kLocalShortcutMask =
   ZVSessionWindowController* wc = [[ZVSessionWindowController alloc] initWithBookmark:bookmark];
   [_sessions addObject:wc];
   [wc start];
+}
+
+// SFTP and FTP connections open the two pane file window directly
+- (void)openFilesForBookmark:(ZVBookmark*)bookmark
+{
+  [[ZVBookmarkStore sharedStore] noteConnectedTo:bookmark];
+  ZVBookmarkFileContext* context = [[ZVBookmarkFileContext alloc] init];
+  context.bookmark = [bookmark copy];
+  NSString* host = bookmark.host;
+  if ([host hasPrefix:@"["] && [host hasSuffix:@"]"])
+    host = [host substringWithRange:NSMakeRange(1, host.length - 2)];
+
+  ZVFileTransferWindowController* fc;
+  if (bookmark.protocolType == ZVProtocolFTP)
+    fc = [[ZVFileTransferWindowController alloc] initWithContext:context ftpHost:host
+                                                            port:(int)bookmark.ftpPort
+                                                        security:(ZVFTPSecurity)bookmark.ftpSecurity
+                                                        username:bookmark.username
+                                                           title:[bookmark displayName]];
+  else
+    fc = [[ZVFileTransferWindowController alloc] initWithContext:context host:host
+                                                            port:(int)(bookmark.sshPort ?: 22)
+                                                        username:bookmark.username
+                                                           title:[bookmark displayName]];
+  fc.ownedContext = context;
+  [_fileWindows addObject:fc];
+  __weak ZVFileTransferWindowController* weakFC = fc;
+  __block id observer = [[NSNotificationCenter defaultCenter]
+    addObserverForName:NSWindowWillCloseNotification object:fc.window queue:nil
+            usingBlock:^(NSNotification* n) {
+    [[NSNotificationCenter defaultCenter] removeObserver:observer];
+    ZVFileTransferWindowController* c = weakFC;
+    if (c) {
+      // Keep the controller alive until the current event is done
+      dispatch_async(dispatch_get_main_queue(), ^{ [self->_fileWindows removeObject:c]; });
+    }
+  }];
+  [fc showWindow:nil];
 }
 
 - (void)openTerminalForBookmark:(ZVBookmark*)bookmark password:(NSString*)password
@@ -301,7 +363,8 @@ static const NSEventModifierFlags kLocalShortcutMask =
 
   NSString* scheme = url.scheme.lowercaseString;
   if (([scheme isEqualToString:@"ssh"] || [scheme isEqualToString:@"telnet"] ||
-       [scheme isEqualToString:@"rdp"]) && url.host.length) {
+       [scheme isEqualToString:@"rdp"] || [scheme isEqualToString:@"sftp"] ||
+       [scheme isEqualToString:@"ftp"] || [scheme isEqualToString:@"ftps"]) && url.host.length) {
     ZVBookmark* quick = [ZVBookmark bookmarkFromQuickConnect:url.absoluteString];
     [self openSessionForBookmark:[[ZVBookmarkStore sharedStore] bookmarkMatching:quick] ?: quick];
     return;
