@@ -2723,8 +2723,14 @@ open class TerminalView: NSView, NSTextInputClient, NSUserInterfaceValidations, 
     open func paste(_ sender: Any)
     {
         let clipboard = NSPasteboard.general
-        let text = clipboard.string(forType: .string)
-        insertText(text ?? "", replacementRange: NSRange(location: 0, length: 0), isPaste: true)
+        // ZeonVNC: send every line break as a single Return (CR), like
+        // Terminal.app and iTerm. Text copied from web pages often has CRLF
+        // line ends, which the shell otherwise sees as two Returns: a command
+        // continued with "\" then runs early and the next lines run alone.
+        let text = (clipboard.string(forType: .string) ?? "")
+            .replacingOccurrences(of: "\r\n", with: "\r")
+            .replacingOccurrences(of: "\n", with: "\r")
+        insertText(text, replacementRange: NSRange(location: 0, length: 0), isPaste: true)
     }
     
     @objc
