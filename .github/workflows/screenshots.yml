@@ -1,0 +1,52 @@
+name: Screenshots
+
+# Builds the app and takes the README / user guide screenshots on a clean
+# macOS runner (tools/take-screenshots.sh); the pictures are pushed to the
+# "screenshots" branch to be copied into docs/images.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["claude/**"]
+    paths: ["tools/take-screenshots.sh", ".github/workflows/screenshots.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: brew install cmake ninja jpeg-turbo pixman gnutls nettle libssh2 openssl@3
+
+      - uses: actions/cache@v4
+        id: freerdp
+        with:
+          path: freerdp
+          key: freerdp-macos15-${{ github.event.repository.name }}-${{ hashFiles('tools/build-freerdp.sh') }}
+
+      - name: Build FreeRDP
+        if: steps.freerdp.outputs.cache-hit != 'true'
+        run: MACOSX_DEPLOYMENT_TARGET=15.0 tools/build-freerdp.sh freerdp --with-sample-server
+
+      - name: Build
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTSERVER=ON -DCODESIGN_IDENTITY=- \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 -DFREERDP_DIR="$PWD/freerdp" -DENABLE_SPARKLE=OFF
+          cmake --build build -j
+
+      - name: Take screenshots
+        run: tools/take-screenshots.sh build shots
+
+      - name: Push the screenshots
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git checkout --orphan screenshots
+          git rm -rq --cached .
+          git add -f shots
+          git commit -qm "Screenshots from ${GITHUB_SHA::7}"
+          git push -f origin screenshots
